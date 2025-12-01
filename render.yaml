@@ -2,9 +2,14 @@ services:
   - type: web
     name: multi-agent-blog-ai
     env: python
-    region: oregon          # change to your preferred region (e.g., oregon, frankfurt)
-    plan: free              # change if you need a paid plan
-    buildCommand: pip install -r requirements.txt
+    region: oregon
+    plan: free
+    # Build command will upgrade pip, install wheels and requirements, and download spaCy model
+    buildCommand: >
+      bash -lc "python -m pip install --upgrade pip setuptools wheel && \
+      pip install -r requirements.txt && \
+      python -m spacy download en_core_web_sm"
+    # Use Render's $PORT at runtime
     startCommand: bash -lc "streamlit run app.py --server.port $PORT --server.address 0.0.0.0"
     healthCheckPath: /
     autoDeploy: true
@@ -18,7 +23,4 @@ services:
       - key: SERPER_API_KEY
         value: "2"
       - key: ZEROGPT_API_KEY
-        value: "0"
-
-         # Render will override with its runtime $PORT; this is just a placeholder
-      # DO NOT put secret keys here. Add OPENAI_API_KEY and SERPER_API_KEY in Render's Dashboard as secure variables.
+        value: "0" # placeholder - Render will override with runtime $PORT
