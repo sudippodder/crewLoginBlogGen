@@ -8,3 +8,5 @@ python-dotenv>=1.0.0
 streamlit-cookies-manager>=0.2.0
 pandas>=2.2.2
 newspaper3k
+lxml
+lxml_html_clean
