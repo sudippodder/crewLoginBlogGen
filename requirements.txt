@@ -10,3 +10,4 @@ pandas>=2.2.2
 newspaper3k
 lxml
 lxml_html_clean
+spacy==3.7.2
