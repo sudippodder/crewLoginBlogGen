@@ -5,22 +5,18 @@ Flask>=2.3.0
 crewai>=0.40.0
 crewai-tools>=0.5.0
 
-# OpenAI + HTTP
+# OpenAI + utils
 openai>=1.0.0
 requests>=2.31.0
 python-dotenv>=1.0.0
-
-# Cookies + Utils
 streamlit-cookies-manager>=0.2.0
 pandas>=2.2.2
 
-# Newspaper3k dependencies
+# Newspaper
 newspaper3k
 lxml==4.9.3
 lxml_html_clean
 
-# spaCy (requires wheels to avoid Rust errors)
+# spaCy + deps
 spacy==3.7.2
-
-# spaCy model downloader (non-breaking)
 catalogue>=2.0.0
