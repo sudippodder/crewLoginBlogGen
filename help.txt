@@ -1,0 +1,22 @@
+Username: admin and Password: adminpass
+
+
+
+
+conda create -p venv python==3.10
+conda activate venv/
+
+pip install crewai openai requests python-dotenv
+
+(Get-ChildItem -Recurse .git | Measure-Object -Property Length -Sum).Sum / 1MB
+
+
+ pip install -r requirements.txt
+
+ streamlit run yourscript.py
+
+
+--------------------------------------------------------------
+pip install streamlit newspaper3k beautifulsoup4 spacy textblob openai python-multipart textstat
+python -m textblob.download_corpora
+python -m spacy download en_core_web_sm
