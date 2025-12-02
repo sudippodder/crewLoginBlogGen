@@ -18,3 +18,7 @@ lxml==4.9.3
 lxml_html_clean
 
 # spaCy + deps
+
+
+textblob
+nltk

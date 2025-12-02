@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     # Build command will upgrade pip, install wheels and requirements, and download spaCy model
-    buildCommand: python -m pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
+    buildCommand: python -m pip install --upgrade pip setuptools wheel && pip install -r requirements.txt && python -m textblob.download_corpora
 
     # Use Render's $PORT at runtime
     startCommand: bash -lc "streamlit run auth_app.py --server.port $PORT --server.address 0.0.0.0"
