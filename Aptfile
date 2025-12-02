@@ -1,0 +1,12 @@
+build-essential
+python3-dev
+pkg-config
+libxml2-dev
+libxslt1-dev
+zlib1g-dev
+libffi-dev
+libssl-dev
+libopenblas-dev
+libblas-dev
+liblapack-dev
+cargo
