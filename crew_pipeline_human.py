@@ -55,7 +55,7 @@ def run_safe_pipeline_with_progress(crew, tasks):
     log_text = ""
     total = len(tasks)
     #st.json(PERSONALITIES)
-    st.dataframe(PERSONALITIES)
+    #st.dataframe(PERSONALITIES)
     # for  item in enumerate(PERSONALITIES, start=1):
     #     st.write(f"{item}")
     # quick preview

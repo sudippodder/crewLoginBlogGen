@@ -137,3 +137,42 @@ def get_selected_tones_by_user(user_id):
     #result = res.flat()
     conn.close()
     return result
+
+
+
+def get_all_personalities(user_id=None):
+    """Retrieves all tones created by a specific user."""
+    # user = st.session_state['user_info']
+    # user_id = user['id']
+    user = st.session_state.get("user_info")
+    #user = st.session_state['user_info']
+    try:
+        user_id = user['id']
+    except TypeError:
+        # This catches the 'NoneType' object is not subscriptable error
+        print("Error: Failed to retrieve user data (variable 'user' is None).")
+        user_id = None
+
+    conn = sqlite3.connect(DATABASE_FILE)
+    c = conn.cursor()
+    # Join tones with users to get the username for display
+
+    c.execute("""
+        SELECT p.generated_json
+        FROM micro_roles p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.user_id = ? and p.is_active = 1
+        ORDER BY p.created_at DESC
+    """, (user_id,))
+    posts = c.fetchall()
+    res = []
+    for post in posts:
+        role_json = json.loads(post[0])
+        sposts = role_json.get("micro_agent_list") if isinstance(role_json, dict) else None
+        res.append(sposts if sposts else None)
+    #posts = [json.loads(row[0]) for row in posts]  # Parse JSON strings into Python objects
+    #suggested_agents = role_json.get("micro_agent_list") if isinstance(role_json, dict) else None
+    result = [item for arr in res for item in arr]
+    #result = res.flat()
+    conn.close()
+    return result

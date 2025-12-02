@@ -8,6 +8,7 @@ from paragraph_editor import display_paragraphs_with_detection
 from highlight_ai_segments import display_highlighted_text
 import json
 from dotenv import load_dotenv
+import common
 load_dotenv()
 
 DATABASE_FILE = os.getenv("DATABASE_FILE")
@@ -68,6 +69,7 @@ def generate_content_page():
 
     st.title("✍️ Generate AI Blog Content")
 
+    st.dataframe(common.get_all_personalities())
     topic = st.text_input("Enter your topic:", value=(row[1] != None and row[1] or ""), placeholder="e.g. AI tools for marketing")
 
     with st.expander("Researcher Settings", expanded=True):

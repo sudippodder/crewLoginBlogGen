@@ -77,6 +77,7 @@ def init_db():
             editor_backstory TEXT,
             final_output TEXT,
             detection_result TEXT,
+            user_id INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -90,7 +91,9 @@ def init_db():
             style TEXT,
             patterns TEXT,
             generated_json TEXT,
-            created_at TEXT
+            created_at TEXT,
+            is_active INTEGER DEFAULT 1,
+            user_id INTEGER DEFAULT 0
         )
     """)
     # c.execute("""
@@ -459,7 +462,7 @@ def show_post_content():
         st.session_state.edit_cache = {}
 
 
-    st.title("🧠 AI Content Agent v1.0.3")
+    st.title("🧠 AI Content Agent v1.0.4")
 
     st.markdown(f"""
     <b>Enter your topic, then define each agent's role and backstory to get targeted, comprehensive output. The more specific you are, the better your content in terms of depth, angle, and completeness.</b>\n"""
@@ -689,7 +692,7 @@ def main():
 
             # Added 'Posts' to the list of pages
             #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
-            user_pages = ['Dashboard', 'Profile', 'Content', 'Tone']
+            user_pages = ['Dashboard', 'Profile', 'Tone','Content' ]
             # Determine the correct index for the current page selection
             try:
                 current_index = user_pages.index(st.session_state['page'].capitalize())
