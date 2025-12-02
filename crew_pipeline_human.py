@@ -104,15 +104,25 @@ MICRO_CONCLUSION = 2
 PASSES_PER_SECTION = int(os.getenv('HUMANIZER_REFINEMENTS', 1))
 MAX_REAL_TASKS = 40
 
-
+PERSONALITIES = [
+        'sarcastic friend','nostalgic storyteller','curious teacher','chaotic thinker','casual confidant',
+        'skeptical critic','optimistic mentor','grumpy old-timer','chatty neighbor','daydreamer'
+    ]
 if "user_info" not in st.session_state:
     PERSONALITIES = [
         'sarcastic friend','nostalgic storyteller','curious teacher','chaotic thinker','casual confidant',
         'skeptical critic','optimistic mentor','grumpy old-timer','chatty neighbor','daydreamer'
     ]
 else:
-    user = st.session_state['user_info']
-    user_id = user['id']
+    user = st.session_state.get("user_info")
+    #user = st.session_state['user_info']
+    try:
+        user_id = user['id']
+    except TypeError:
+        # This catches the 'NoneType' object is not subscriptable error
+        print("Error: Failed to retrieve user data (variable 'user' is None).")
+        user_id = None
+    #user_id = user['id']
     selected_tones = common.get_selected_tones_by_user(user_id)
     PERSONALITIES = selected_tones if selected_tones else PERSONALITIES
 

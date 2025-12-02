@@ -18,6 +18,15 @@ DEFAULT_USER_ROLE = os.getenv("DEFAULT_USER_ROLE")
 # The user with this username will be considered the admin (default password 'adminpass')
 ADMIN_USER = os.getenv("ADMIN_USER")
 
+for k, v in {
+    "reg_user": "",
+    "reg_pass": "",
+    "reg_name": "",
+    "reg_email": "",
+    "reg_message": ""
+}.items():
+    st.session_state.setdefault(k, v)
+
 # --- Utility Functions for Hashing ---
 def hash_password(password):
     """Hashes a password using SHA256."""
@@ -308,10 +317,14 @@ def show_login_page():
                     if add_user(reg_username, reg_password, reg_email, reg_name):
                         st.success("Registration successful! You can now log in.")
                         # Resetting form fields
-                        st.session_state["reg_user"] = ""
-                        st.session_state["reg_pass"] = ""
-                        st.session_state["reg_name"] = ""
-                        st.session_state["reg_email"] = ""
+                        if 'reg_user' not in st.session_state:
+                            st.session_state.reg_user = ""
+                        if 'reg_pass' not in st.session_state:
+                            st.session_state.reg_pass = ""
+                        if 'reg_name' not in st.session_state:
+                            st.session_state.reg_name = ""
+                        if 'reg_email' not in st.session_state:
+                            st.session_state.reg_email = ""
                     else:
                         st.error("Registration failed. Username might already be taken.")
                 else:
