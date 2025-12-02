@@ -28,16 +28,30 @@ import requests
 # NLP
 try:
     import spacy
+    try:
+        # load lazily; if model not present this may throw
+        nlp = spacy.load("en_core_web_sm")
+    except Exception:
+        nlp = None
 except Exception:
-    spacy = None  # spaCy missing; fall back to lighter processing
-# later, guard usage:
-if spacy:
-    nlp = spacy.load("en_core_web_sm")
-else:
-    # fallback processing or skip spaCy-specific behavior
+    spacy = None
     nlp = None
-from textblob import TextBlob
-import textstat
+
+# TextBlob (pure-python) — optional but recommended to be installed
+try:
+    from textblob import TextBlob
+except Exception:
+    TextBlob = None
+
+# textstat is pure-python — better to ensure it's installed; fallback safe functions:
+try:
+    import textstat
+except Exception:
+    textstat = None
+
+
+#from textblob import TextBlob
+#import textstat
 
 # LLM
 import openai
@@ -97,16 +111,36 @@ def load_local_text_file(path: str) -> str:
 
 # Text analysis ----
 def analyze_text_features(text: str) -> Dict[str, Any]:
-    doc = nlp(text[:20000])  # limit for speed
-    sentences = list(doc.sents)
+    #doc = nlp(text[:20000])  # limit for speed
+    #sentences = list(doc.sents)
     sent_texts = [s.text.strip() for s in sentences if s.text.strip()]
-    words = [token.text for token in doc if token.is_alpha]
+    #words = [token.text for token in doc if token.is_alpha]
+
+    if nlp:
+        doc = nlp(text[:20000])
+        sentences = list(doc.sents)
+        words = [token.text for token in doc if token.is_alpha]
+    else:
+        # fallback: naive sentence split + tokenization
+        sentences = [s.strip() for s in re.split(r'[.!?]\s+', text[:20000]) if s.strip()]
+        words = re.findall(r'\b[a-zA-Z]+\b', text[:20000])
+    if TextBlob:
+        polarity = TextBlob(text).sentiment.polarity
+        subjectivity = TextBlob(text).sentiment.subjectivity
+    else:
+        polarity = 0.0
+        subjectivity = 0.0
+    if textstat and len(text.split()) > 100:
+        flesch = textstat.flesch_reading_ease(text)
+    else:
+        flesch = None
+
     avg_sentence_len = sum(len(s.split()) for s in sent_texts) / max(1, len(sent_texts))
     sentence_var = (sum((len(s.split()) - avg_sentence_len)**2 for s in sent_texts) / max(1, len(sent_texts)))**0.5
     lexical_diversity = len(set(words))/max(1, len(words))
-    polarity = TextBlob(text).sentiment.polarity
-    subjectivity = TextBlob(text).sentiment.subjectivity
-    flesch = textstat.flesch_reading_ease(text) if len(text.split())>100 else None
+    #polarity = TextBlob(text).sentiment.polarity
+    #subjectivity = TextBlob(text).sentiment.subjectivity
+    #flesch = textstat.flesch_reading_ease(text) if len(text.split())>100 else None
     common_transitions = []
     # small heuristic: find frequent transition phrases
     transitions = ["however","therefore","meanwhile","in reality","that said","on the other hand","but then"]
