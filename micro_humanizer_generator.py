@@ -26,7 +26,16 @@ from bs4 import BeautifulSoup
 import requests
 
 # NLP
-import spacy
+try:
+    import spacy
+except Exception:
+    spacy = None  # spaCy missing; fall back to lighter processing
+# later, guard usage:
+if spacy:
+    nlp = spacy.load("en_core_web_sm")
+else:
+    # fallback processing or skip spaCy-specific behavior
+    nlp = None
 from textblob import TextBlob
 import textstat
 
@@ -36,7 +45,7 @@ import common
 load_dotenv()
 # Setup ----
 st.set_page_config(page_title="Micro Humanizer Role Generator", layout="wide")
-nlp = spacy.load("en_core_web_sm")
+#nlp = spacy.load("en_core_web_sm")
 
 DATABASE_FILE = os.getenv("DATABASE_FILE")
 # Developer-provided uploaded file path from earlier session (included as example)
