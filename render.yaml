@@ -21,3 +21,5 @@ services:
         value: "2"
       - key: ZEROGPT_API_KEY
         value: "0" # placeholder - Render will override with runtime $PORT
+      - key: PYTHON_VERSION
+        value: "3.12"
