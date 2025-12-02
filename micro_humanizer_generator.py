@@ -110,60 +110,165 @@ def load_local_text_file(path: str) -> str:
     return ""
 
 # Text analysis ----
-def analyze_text_features(text: str) -> Dict[str, Any]:
-    #doc = nlp(text[:20000])  # limit for speed
-    #sentences = list(doc.sents)
-    sent_texts = [s.text.strip() for s in sentences if s.text.strip()]
-    #words = [token.text for token in doc if token.is_alpha]
+# def analyze_text_features(text: str) -> Dict[str, Any]:
+#     #doc = nlp(text[:20000])  # limit for speed
+#     #sentences = list(doc.sents)
+#     sent_texts = [s.text.strip() for s in sentences if s.text.strip()]
+#     #words = [token.text for token in doc if token.is_alpha]
 
+#     if nlp:
+#         doc = nlp(text[:20000])
+#         sentences = list(doc.sents)
+#         words = [token.text for token in doc if token.is_alpha]
+#     else:
+#         # fallback: naive sentence split + tokenization
+#         sentences = [s.strip() for s in re.split(r'[.!?]\s+', text[:20000]) if s.strip()]
+#         words = re.findall(r'\b[a-zA-Z]+\b', text[:20000])
+#     if TextBlob:
+#         polarity = TextBlob(text).sentiment.polarity
+#         subjectivity = TextBlob(text).sentiment.subjectivity
+#     else:
+#         polarity = 0.0
+#         subjectivity = 0.0
+#     if textstat and len(text.split()) > 100:
+#         flesch = textstat.flesch_reading_ease(text)
+#     else:
+#         flesch = None
+
+#     avg_sentence_len = sum(len(s.split()) for s in sent_texts) / max(1, len(sent_texts))
+#     sentence_var = (sum((len(s.split()) - avg_sentence_len)**2 for s in sent_texts) / max(1, len(sent_texts)))**0.5
+#     lexical_diversity = len(set(words))/max(1, len(words))
+#     #polarity = TextBlob(text).sentiment.polarity
+#     #subjectivity = TextBlob(text).sentiment.subjectivity
+#     #flesch = textstat.flesch_reading_ease(text) if len(text.split())>100 else None
+#     common_transitions = []
+#     # small heuristic: find frequent transition phrases
+#     transitions = ["however","therefore","meanwhile","in reality","that said","on the other hand","but then"]
+#     lowered = text.lower()
+#     for t in transitions:
+#         if lowered.count(t) > 0:
+#             common_transitions.append(t)
+#     # simple top keywords (by frequency)
+#     token_freq = {}
+#     for w in words:
+#         token_freq[w.lower()] = token_freq.get(w.lower(), 0) + 1
+#     top_keywords = sorted(token_freq.items(), key=lambda x: x[1], reverse=True)[:20]
+#     return {
+#         "word_count": len(words),
+#         "sentence_count": len(sent_texts),
+#         "avg_sentence_length": round(avg_sentence_len, 2),
+#         "sentence_length_stddev": round(sentence_var, 2),
+#         "lexical_diversity": round(lexical_diversity, 3),
+#         "polarity": round(polarity, 3),
+#         "subjectivity": round(subjectivity, 3),
+#         "flesch_reading_ease": round(flesch,2) if flesch is not None else None,
+#         "common_transitions": common_transitions,
+#         "top_keywords": [k for k,v in top_keywords],
+#     }
+
+
+def analyze_text_features(text: str) -> Dict[str, Any]:
+    """
+    Robust text analysis that works whether spaCy (nlp) is available or not.
+    Always returns a dict with the same keys and safe default values.
+    """
+    # limit text length for performance
+    sample = text[:20000] if isinstance(text, str) else ""
+
+    # prepare containers with safe defaults
+    sentences = []
+    words = []
+
+    # If spaCy is available, use it for better tokenization/sentences
     if nlp:
-        doc = nlp(text[:20000])
-        sentences = list(doc.sents)
-        words = [token.text for token in doc if token.is_alpha]
-    else:
-        # fallback: naive sentence split + tokenization
-        sentences = [s.strip() for s in re.split(r'[.!?]\s+', text[:20000]) if s.strip()]
-        words = re.findall(r'\b[a-zA-Z]+\b', text[:20000])
+        try:
+            doc = nlp(sample)
+            sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
+            words = [token.text for token in doc if getattr(token, "is_alpha", False)]
+        except Exception:
+            # fallback to naive approach below if spacy fails at runtime
+            sentences = []
+            words = []
+
+    # Fallback (or if spaCy not available / produced nothing)
+    if not sentences:
+        # naive sentence split
+        import re
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', sample) if s.strip()]
+
+    if not words:
+        # naive tokenization: alphabetic words only
+        import re
+        words = re.findall(r'\b[a-zA-Z]+\b', sample)
+
+    # Safe numeric computations
+    sent_texts = sentences or []
+    word_list = words or []
+
+    num_sentences = len(sent_texts)
+    num_words = len(word_list)
+
+    # average sentence length (words per sentence)
+    avg_sentence_len = 0.0
+    if num_sentences > 0:
+        avg_sentence_len = sum(len(s.split()) for s in sent_texts) / num_sentences
+
+    # standard deviation of sentence lengths
+    sentence_var = 0.0
+    if num_sentences > 0:
+        sentence_var = (sum((len(s.split()) - avg_sentence_len) ** 2 for s in sent_texts) / num_sentences) ** 0.5
+
+    # lexical diversity
+    lexical_diversity = round(len(set(word_list)) / max(1, num_words), 3) if num_words > 0 else 0.0
+
+    # sentiment via TextBlob if available
     if TextBlob:
-        polarity = TextBlob(text).sentiment.polarity
-        subjectivity = TextBlob(text).sentiment.subjectivity
+        try:
+            tb = TextBlob(sample)
+            polarity = tb.sentiment.polarity
+            subjectivity = tb.sentiment.subjectivity
+        except Exception:
+            polarity = 0.0
+            subjectivity = 0.0
     else:
         polarity = 0.0
         subjectivity = 0.0
-    if textstat and len(text.split()) > 100:
-        flesch = textstat.flesch_reading_ease(text)
+
+    # readability via textstat if available
+    if textstat and len(sample.split()) > 100:
+        try:
+            flesch = textstat.flesch_reading_ease(sample)
+        except Exception:
+            flesch = None
     else:
         flesch = None
 
-    avg_sentence_len = sum(len(s.split()) for s in sent_texts) / max(1, len(sent_texts))
-    sentence_var = (sum((len(s.split()) - avg_sentence_len)**2 for s in sent_texts) / max(1, len(sent_texts)))**0.5
-    lexical_diversity = len(set(words))/max(1, len(words))
-    #polarity = TextBlob(text).sentiment.polarity
-    #subjectivity = TextBlob(text).sentiment.subjectivity
-    #flesch = textstat.flesch_reading_ease(text) if len(text.split())>100 else None
+    # transitions heuristic
     common_transitions = []
-    # small heuristic: find frequent transition phrases
     transitions = ["however","therefore","meanwhile","in reality","that said","on the other hand","but then"]
-    lowered = text.lower()
+    lowered = sample.lower()
     for t in transitions:
         if lowered.count(t) > 0:
             common_transitions.append(t)
-    # simple top keywords (by frequency)
+
+    # top keywords by simple frequency
     token_freq = {}
-    for w in words:
-        token_freq[w.lower()] = token_freq.get(w.lower(), 0) + 1
-    top_keywords = sorted(token_freq.items(), key=lambda x: x[1], reverse=True)[:20]
+    for w in word_list:
+        lw = w.lower()
+        token_freq[lw] = token_freq.get(lw, 0) + 1
+    top_keywords = [k for k,v in sorted(token_freq.items(), key=lambda x: x[1], reverse=True)[:20]]
+
     return {
-        "word_count": len(words),
-        "sentence_count": len(sent_texts),
+        "word_count": num_words,
+        "sentence_count": num_sentences,
         "avg_sentence_length": round(avg_sentence_len, 2),
         "sentence_length_stddev": round(sentence_var, 2),
-        "lexical_diversity": round(lexical_diversity, 3),
+        "lexical_diversity": lexical_diversity,
         "polarity": round(polarity, 3),
         "subjectivity": round(subjectivity, 3),
-        "flesch_reading_ease": round(flesch,2) if flesch is not None else None,
+        "flesch_reading_ease": round(flesch, 2) if flesch is not None else None,
         "common_transitions": common_transitions,
-        "top_keywords": [k for k,v in top_keywords],
+        "top_keywords": top_keywords,
     }
 
 # Micro humanizer template fallback (non-LLM) ----
