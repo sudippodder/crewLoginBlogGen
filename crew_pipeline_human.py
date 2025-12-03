@@ -148,7 +148,7 @@ def run_safe_pipeline_with_progress(crew, tasks):
                 if log_status == 'FINISHED':
                     markdown_list += f"* **✅ Done:** ~~{task.agent.role}: {task.description}~~\n"
                 elif log_status == 'STARTING':
-                    markdown_list += f"* **▶️ Working:** **{task.agent.role}: {task.description}**\n"
+                    markdown_list += f"* **▶️ Executed:** **{task.agent.role}: {task.description}**\n"
                 elif log_status == 'FAILED':
                     markdown_list += f"* **❌ Failed:** {task.agent.role}: {task.description}\n"
                 else:

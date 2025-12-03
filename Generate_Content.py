@@ -69,7 +69,7 @@ def generate_content_page():
 
     st.title("✍️ Generate AI Blog Content")
 
-    st.dataframe(common.get_all_personalities())
+    st.dataframe({'Tones':common.get_all_personalities()})
     topic = st.text_input("Enter your topic:", value=(row[1] != None and row[1] or ""), placeholder="e.g. AI tools for marketing")
 
     with st.expander("Researcher Settings", expanded=True):

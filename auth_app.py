@@ -271,28 +271,36 @@ def save_session_state(user_info):
 #         'role': st.session_state.get('role', None),
 #     }
 
-def load_session_state() -> dict or None:
+def load_session_state():
     """Loads user information from the cookie."""
-    user_info_json = cookies.get(USER_COOKIE_KEY)
-
-    if user_info_json:
-        try:
-            return json.loads(user_info_json)
-        except json.JSONDecodeError:
-            st.error("Error decoding user cookie data.")
-            return None
-    return None
-def clear_session_state() -> dict or None:
-    """Clears the persistent session file."""
-
     try:
-        del cookies[USER_COOKIE_KEY]
-        cookies.save()
+        user_info_json = cookies.get(USER_COOKIE_KEY)
+
+        # Check if cookie exists and is not empty
+        if user_info_json and user_info_json.strip():
+            try:
+                return json.loads(user_info_json)
+            except json.JSONDecodeError:
+                st.error("Error decoding user cookie data.")
+                return None
+    except:
+        pass
+
+    return None
+
+
+
+def clear_session_state():
+    """Clears the persistent session file."""
+    try:
+        # Check if cookie exists and delete it
+        if USER_COOKIE_KEY in cookies:
+            del cookies[USER_COOKIE_KEY]
+            cookies.save()
     except Exception as e:
         st.error(f"Error clearing session state from cookie: {e}")
 
-
-
+    # Clear all session state keys
     keys_to_delete = list(st.session_state.keys())
     for key in keys_to_delete:
         del st.session_state[key]
@@ -321,7 +329,7 @@ def initialize_session_state():
 
     # 1. Check for persistent login file first
     persistent_info = load_session_state()
-    st.json( st.session_state)
+    # st.json( st.session_state)
     # 2. Initialize Streamlit session state
     if 'logged_in' not in st.session_state:
         # If Streamlit session is fresh, use persistent info if available
@@ -332,12 +340,11 @@ def initialize_session_state():
     if 'page' not in st.session_state:
         # Default page is login if not logged in, otherwise dashboard
         st.session_state['page'] = 'login' if not st.session_state['logged_in'] else 'dashboard'
-    st.json( st.session_state)
+    #st.json( st.session_state)
     # 3. Check for demo admin user
     if not verify_credentials(ADMIN_USER, "adminpass"):
         if add_user(ADMIN_USER, "adminpass", "admin@example.com", "System Admin", "admin"):
             st.info(f"Demo admin user '{ADMIN_USER}' created. Password: 'adminpass'.")
-
 
 # --- Authentication Logic ---
 
@@ -359,27 +366,21 @@ def login_user(username, password):
         st.error("Invalid username or password.")
 
 def logout_user():
-
     """Handles the logout process."""
+    # Clear the persistent session cookie
+    if USER_COOKIE_KEY in cookies:
+        cookies[USER_COOKIE_KEY] = ""
+        cookies.save()
+    # Clear all session state
+    keys_to_delete = list(st.session_state.keys())
+    for key in keys_to_delete:
+        del st.session_state[key]
+    # Set logged out state
     st.session_state['logged_in'] = False
     st.session_state['user_info'] = None
     st.session_state['page'] = 'login'
-
-    # Clear the persistent session file
-    clear_session_state()
-    st.markdown(f"{cookies}")
-    if USER_COOKIE_KEY in cookies:
-        del cookies[USER_COOKIE_KEY]
-        cookies.save()
-
-    st.markdown(f"{cookies}")
-
-    keys_to_delete = list(st.session_state.keys())
-    st.json(st.session_state)
-    for key in keys_to_delete:
-        del st.session_state[key]
     st.toast("Logged out successfully!", icon="👋")
-    time.sleep(10) # Small delay to show the toast
+    time.sleep(0.5)  # Brief delay to show toast
     st.rerun()
 
 # --- Page Rendering Functions ---
@@ -472,7 +473,7 @@ def show_profile():
     """Renders the user profile page."""
     user = st.session_state['user_info']
     st.title("👤 User Profile")
-    st.header(f"Details for {user['username'].capitalize()}", divider='green')
+    #st.header(f"Details for {user['username'].capitalize()}", divider='green')
 
     st.markdown(f"""
         <div style="border: 1px solid #ddd; padding: 25px; border-radius: 12px; background-color: #f0fff4;">
@@ -543,8 +544,8 @@ def show_post_content():
     user_id = user['id']
     username = user['username']
 
-    st.title("✍️ My Posts")
-    st.header(f"Create and View Your Content ({username})", divider='orange')
+    st.title("✍️ Generate Content with Tones")
+    #st.header(f"Create and View Your Content ({username})", divider='orange')
 
 
     if "detection_result" not in st.session_state:
@@ -581,7 +582,7 @@ def show_post_tone():
     user_id = user['id']
     username = user['username']
 
-    st.title("✍️ My Posts")
+    st.title("✍️ Generate Content with Tones")
     st.header(f"Create and View Your Content ({username})", divider='orange')
 
     # --- Post Creation Form ---
@@ -662,7 +663,7 @@ def show_tone_page():
     user_id = user['id']
     username = user['username']
 
-    st.title("✍️ My Tones")
+
     #st.header(f"View Your Tones ({username})", divider='orange')
     # st.markdown("""
     #     <style>
@@ -677,8 +678,9 @@ def show_tone_page():
     # st.markdown('</div>', unsafe_allow_html=True)
 
     left, right = st.columns([8, 2])
-
-    left.header(f"View Your Tones ({username})")  # optional text
+    with left:
+        st.title("✍️ My Tones")
+    #left.header(f"View Your Tones ({username})")  # optional text
     with right:
         if st.button("Create Tone", type="primary"):
             common.navigate_to("addtone")
@@ -773,7 +775,7 @@ def main():
     init_db()
     # Now includes checking for persistent session file
     initialize_session_state()
-    st.json(st.session_state)
+    #st.json(st.session_state)
     # 2. Sidebar/Navigation
     with st.sidebar:
         st.header("App Navigation")
@@ -813,7 +815,7 @@ def main():
                     st.session_state['page'] = 'admin'
 
             st.markdown("---")
-            st.markdown(f"### Account Actions {cookies}")
+            #st.markdown(f"### Account Actions {cookies}")
             st.button("Logout", on_click=logout_user, use_container_width=True, type="primary", key="logout_btn")
 
         else:
