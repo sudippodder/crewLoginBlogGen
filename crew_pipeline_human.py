@@ -44,53 +44,180 @@ def safe_output_to_json(result):
     except Exception as e:
         return {'error': str(e)}
 
+
+
+
+# Assuming the run_pipeline and CrewAI setup are in place...
+
+
+
+PROGRESS_LOG = []
+
 def run_safe_pipeline_with_progress(crew, tasks):
-    #global PERSONALITIES
-    """Lightweight Streamlit progress UI used by examples."""
+    """
+    Corrected version of V8. Runs the CrewAI pipeline with task-by-task progress.
+    Fixes the 'Task Log' appending issue by using a dedicated placeholder inside the container.
+    """
 
-    st.subheader("🚀 Running Compact Humanized Pipeline")
-    progress = st.progress(0)
-    status = st.empty()
-    logs = st.empty()
-    log_text = ""
+    global PROGRESS_LOG
+    PROGRESS_LOG = [] # Reset the log for a new run
     total = len(tasks)
-    #st.json(PERSONALITIES)
-    #st.dataframe(PERSONALITIES)
-    # for  item in enumerate(PERSONALITIES, start=1):
-    #     st.write(f"{item}")
-    # quick preview
-    for i, t in enumerate(tasks):
-        status.markdown(f"**Preparing Task {i+1}/{total}:** {getattr(t.agent,'role','Unknown')}")
-        log_text += f"\n- {t.description}"
-        logs.markdown(log_text)
-        progress.progress((i+1)/total * 0.2)
-        time.sleep(0.12)
 
-    status.markdown("**Executing pipeline...**")
     result_container = {'result': None}
-    #st.stop()
-    # run in thread to keep UI responsive
-    def run_crew():
-        try:
-            result_container['result'] = crew.kickoff()
-        except Exception as e:
-            result_container['result'] = f"⚠ Crew kickoff failed: {e}"
 
-    thread = threading.Thread(target=run_crew)
-    thread.start()
+    # 1. DEFINE PERMANENT UI ELEMENTS
+    st.markdown("## 📋 Pipeline Execution Log")
+    detailed_log_container = st.container()
 
-    p = int(total * 0.2 * 100)
-    while thread.is_alive():
-        p = min(p + random.randint(1,4), 98)
-        progress.progress(p/100)
-        status.markdown(f"**Running... {p}%**")
-        time.sleep(0.25)
+    # Define the placeholder once inside the permanent container
+    with detailed_log_container:
+        st.markdown("### Task Details") # Keep the heading static
+        task_list_placeholder = st.empty() # THIS is the element we will update repeatedly
 
-    thread.join()
-    progress.progress(1.0)
-    status.markdown("**Pipeline complete**")
-    logs.markdown(log_text + "\n\n**Finished.**")
-    return safe_output_to_json(result_container['result'])
+    def run_crew_sequential():
+        # ... (run_crew_sequential remains the same as in V7/V8)
+        nonlocal result_container
+
+        for i, task in enumerate(tasks):
+            agent_name = task.agent.role
+            task_desc = task.description
+
+            PROGRESS_LOG.append({'status': 'STARTING', 'index': i, 'agent': agent_name, 'desc': task_desc})
+
+            # NOTE: Create a minimal crew to run only this single task (required for logging between tasks)
+            single_task_crew = Crew(agents=[task.agent], tasks=[task], verbose=False)
+
+            try:
+                task_result = single_task_crew.kickoff(inputs={})
+
+                PROGRESS_LOG.append({'status': 'FINISHED', 'index': i, 'agent': agent_name, 'result': task_result})
+
+                if i == total - 1:
+                    result_container['result'] = task_result
+
+            except Exception as e:
+                PROGRESS_LOG.append({'status': 'FAILED', 'index': i, 'agent': agent_name, 'error': str(e)})
+                result_container['result'] = f"⚠ Pipeline failed at {agent_name}: {e}"
+                return
+
+        PROGRESS_LOG.append({'status': 'COMPLETE'})
+
+
+    thread = threading.Thread(target=run_crew_sequential)
+
+    # 2. Block the UI with st.spinner
+    with st.spinner("Initializing Crew and Agents..."):
+
+        # Placeholders for Visualization (defined *inside* spinner for easy clearing)
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+
+        thread.start()
+
+        # --- Progress Monitoring Loop (Reads the PROGRESS_LOG) ---
+
+        while thread.is_alive() or len([log for log in PROGRESS_LOG if log.get('status') == 'FINISHED']) < total:
+
+            current_finished_count = len([log for log in PROGRESS_LOG if log.get('status') == 'FINISHED'])
+            current_task_index = current_finished_count
+
+            start_log = next((log for log in PROGRESS_LOG if log.get('status') == 'STARTING' and log.get('index') == current_task_index), None)
+
+            percent = (current_finished_count / total) * 100
+
+            progress_bar.progress(percent / 100)
+
+            # Update the status text
+            if start_log:
+                status_text.markdown(f"""
+                    ### 🛠️ Executing Task {current_task_index + 1}/{total}
+                    **Agent:** **{start_log['agent']}**
+                    **Task:** *{start_log['desc']}*
+                """)
+            elif percent >= 100:
+                status_text.success("✅ Pipeline Complete: Compiling Final Result.")
+            else:
+                 status_text.info(f"Preparing to start Task 1...")
+
+            # 3. Update the detailed task list using the placeholder
+
+            markdown_list = ""
+            for i, task in enumerate(tasks):
+                log_status = next((log['status'] for log in PROGRESS_LOG if log.get('index') == i), 'PENDING')
+
+                if log_status == 'FINISHED':
+                    markdown_list += f"* **✅ Done:** ~~{task.agent.role}: {task.description}~~\n"
+                elif log_status == 'STARTING':
+                    markdown_list += f"* **▶️ Working:** **{task.agent.role}: {task.description}**\n"
+                elif log_status == 'FAILED':
+                    markdown_list += f"* **❌ Failed:** {task.agent.role}: {task.description}\n"
+                else:
+                    markdown_list += f"* **⚪ Pending:** {task.agent.role}: {task.description}\n"
+
+            # Use the placeholder's markdown method to replace its contents
+            task_list_placeholder.markdown(markdown_list)
+
+            time.sleep(0.5)
+
+        thread.join()
+
+    # --- Finalization ---
+    st.balloons()
+    progress_bar.progress(1.0)
+    status_text.success("🎉 **Pipeline Complete:** The final humanized article is ready.")
+
+    final_result = safe_output_to_json(result_container['result'])
+    return final_result
+
+
+
+# def run_safe_pipeline_with_progress(crew, tasks):
+#     #global PERSONALITIES
+#     """Lightweight Streamlit progress UI used by examples."""
+
+#     st.subheader("🚀 Running Compact Humanized Pipeline")
+#     progress = st.progress(0)
+#     status = st.empty()
+#     logs = st.empty()
+#     log_text = ""
+#     total = len(tasks)
+#     #st.json(PERSONALITIES)
+#     #st.dataframe(PERSONALITIES)
+#     # for  item in enumerate(PERSONALITIES, start=1):
+#     #     st.write(f"{item}")
+#     # quick preview
+#     for i, t in enumerate(tasks):
+#         status.markdown(f"**Preparing Task {i+1}/{total}:** {getattr(t.agent,'role','Unknown')}")
+#         log_text += f"\n- {t.description}"
+#         logs.markdown(log_text)
+#         progress.progress((i+1)/total * 0.2)
+#         time.sleep(0.12)
+
+#     status.markdown("**Executing pipeline...**")
+#     result_container = {'result': None}
+#     #st.stop()
+#     # run in thread to keep UI responsive
+#     def run_crew():
+#         try:
+#             result_container['result'] = crew.kickoff()
+#         except Exception as e:
+#             result_container['result'] = f"⚠ Crew kickoff failed: {e}"
+
+#     thread = threading.Thread(target=run_crew)
+#     thread.start()
+
+#     p = int(total * 0.2 * 100)
+#     while thread.is_alive():
+#         p = min(p + random.randint(1,4), 98)
+#         progress.progress(p/100)
+#         status.markdown(f"**Running... {p}%**")
+#         time.sleep(0.25)
+
+#     thread.join()
+#     progress.progress(1.0)
+#     status.markdown("**Pipeline complete**")
+#     logs.markdown(log_text + "\n\n**Finished.**")
+#     return safe_output_to_json(result_container['result'])
 
 # ---------------- Config (tune these) ----------------
 # MICRO_INTRO = 2
@@ -292,7 +419,7 @@ def run_pipeline(topic: str,
     tasks.append(Task(description='Overthink full-document messy pass.', expected_output='overthought-draft', agent=overthink))
     tasks.append(Task(description='Entropy model-mix rewrite to break model fingerprints.', expected_output='entropy-draft', agent=entropy))
     tasks.append(Task(description='Final readable disorder pass.', expected_output='final-disorder', agent=final_disorder))
-    tasks.append(Task(description='Format article for publish (markdown/HTML).', expected_output='publish-ready', agent=publisher))
+    tasks.append(Task(description='Format article for publish (markdown).', expected_output='publish-ready', agent=publisher))
 
     # assemble agents list
     agents = [

@@ -9,6 +9,18 @@ from Generate_Content import generate_content_page
 from dotenv import load_dotenv
 import micro_humanizer_generator
 import common
+from streamlit_cookies_manager import EncryptedCookieManager
+ENCRYPTION_PASSWORD = "your_strong_secret_key_here"
+# Key under which the user data will be stored in the cookie
+USER_COOKIE_KEY = "user_session_data"
+# Expiry time (in days) for the persistent login
+COOKIE_EXPIRY_DAYS = 30
+
+cookies = EncryptedCookieManager(prefix="myapp", password="adminapp123")
+if not cookies.ready():
+    st.info("Loading cookies...")
+    st.stop()
+
 # --- Configuration ---
 load_dotenv()
 
@@ -203,32 +215,104 @@ def get_tones_by_user(user_id):
     conn.close()
     return  posts
 
-
 def save_session_state(user_info):
-    """Saves user information to a file for persistent login."""
+    """
+    Saves user information to an encrypted cookie for persistent login.
+    This replaces your file-based save logic.
+    """
     try:
-        # User info is now a dictionary, including 'id'
-        with open(SESSION_FILE, 'w') as f:
-            json.dump(user_info, f)
+        # Convert the dictionary to a JSON string before saving it to the cookie
+        user_info_json = json.dumps(user_info)
+
+        # Set the value in the cookie manager
+        cookies[USER_COOKIE_KEY] = user_info_json
+
+        # Save the cookie to the user's browser with an expiration date
+        # Note: The component handles setting the expiry based on the key persistence
+        cookies.save(expires_in=time.time() + (COOKIE_EXPIRY_DAYS * 24 * 60 * 60))
+
+        st.toast("✅ User session saved successfully to cookie!", icon='🍪')
+
     except Exception as e:
-        print(f"Error saving session state: {e}")
+        # st.error is better than print in Streamlit for user feedback
+        st.error(f"Error saving session state to cookie: {e}")
 
-def load_session_state():
-    """Loads user information from a file if it exists."""
-    if os.path.exists(SESSION_FILE):
+
+#     """Stores user info in Streamlit's per-user session state."""
+#     # Use st.session_state to store data unique to the current user's session
+# #     {"id": 2,
+# # "username": "sudip",
+# # "email": "sudip@gmail.com",
+# # "full_name": "sudip",
+# # "role": "user"}
+#     #st.session_state['logged_in'] = True
+#     st.session_state['id'] = user_info.get('id')
+#     st.session_state['username'] = user_info.get('username')
+#     st.session_state['email'] = user_info.get('email')
+#     st.session_state['full_name'] = user_info.get('full_name')
+#     st.session_state['role'] = user_info.get('role')
+# def save_session_state(user_info):
+#     """Saves user information to a file for persistent login."""
+#     try:
+#         # User info is now a dictionary, including 'id'
+#         with open(SESSION_FILE, 'w') as f:
+#             json.dump(user_info, f)
+#     except Exception as e:
+#         print(f"Error saving session state: {e}")
+# def load_session_state():
+#     """Retrieves user info from the current session state."""
+#     if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
+#         return {}
+#     return {
+#         'id': st.session_state.get('id', False),
+#         'username': st.session_state.get('username', None),
+#         'email': st.session_state.get('email', None),
+#         'full_name': st.session_state.get('full_name', None),
+#         'role': st.session_state.get('role', None),
+#     }
+
+def load_session_state() -> dict or None:
+    """Loads user information from the cookie."""
+    user_info_json = cookies.get(USER_COOKIE_KEY)
+
+    if user_info_json:
         try:
-            with open(SESSION_FILE, 'r') as f:
-                return json.load(f)
-        except Exception as e:
-            # File might be corrupted or empty
-            print(f"Error loading session state: {e}")
-            os.remove(SESSION_FILE) # Clear corrupted file
+            return json.loads(user_info_json)
+        except json.JSONDecodeError:
+            st.error("Error decoding user cookie data.")
+            return None
     return None
-
-def clear_session_state():
+def clear_session_state() -> dict or None:
     """Clears the persistent session file."""
-    if os.path.exists(SESSION_FILE):
-        os.remove(SESSION_FILE)
+
+    try:
+        del cookies[USER_COOKIE_KEY]
+        cookies.save()
+    except Exception as e:
+        st.error(f"Error clearing session state from cookie: {e}")
+
+
+
+    keys_to_delete = list(st.session_state.keys())
+    for key in keys_to_delete:
+        del st.session_state[key]
+
+# def load_session_state():
+#     """Loads user information from a file if it exists."""
+#     if os.path.exists(SESSION_FILE):
+#         try:
+#             with open(SESSION_FILE, 'r') as f:
+#                 return json.load(f)
+#         except Exception as e:
+#             # File might be corrupted or empty
+#             print(f"Error loading session state: {e}")
+#             os.remove(SESSION_FILE) # Clear corrupted file
+#     return None
+
+
+    #st.rerun()
+    # if os.path.exists(SESSION_FILE):
+    #     os.remove(SESSION_FILE)
 
 # --- Session State Management and Initialization ---
 
@@ -237,7 +321,7 @@ def initialize_session_state():
 
     # 1. Check for persistent login file first
     persistent_info = load_session_state()
-
+    st.json( st.session_state)
     # 2. Initialize Streamlit session state
     if 'logged_in' not in st.session_state:
         # If Streamlit session is fresh, use persistent info if available
@@ -248,7 +332,7 @@ def initialize_session_state():
     if 'page' not in st.session_state:
         # Default page is login if not logged in, otherwise dashboard
         st.session_state['page'] = 'login' if not st.session_state['logged_in'] else 'dashboard'
-
+    st.json( st.session_state)
     # 3. Check for demo admin user
     if not verify_credentials(ADMIN_USER, "adminpass"):
         if add_user(ADMIN_USER, "adminpass", "admin@example.com", "System Admin", "admin"):
@@ -275,6 +359,7 @@ def login_user(username, password):
         st.error("Invalid username or password.")
 
 def logout_user():
+
     """Handles the logout process."""
     st.session_state['logged_in'] = False
     st.session_state['user_info'] = None
@@ -282,9 +367,19 @@ def logout_user():
 
     # Clear the persistent session file
     clear_session_state()
+    st.markdown(f"{cookies}")
+    if USER_COOKIE_KEY in cookies:
+        del cookies[USER_COOKIE_KEY]
+        cookies.save()
 
+    st.markdown(f"{cookies}")
+
+    keys_to_delete = list(st.session_state.keys())
+    st.json(st.session_state)
+    for key in keys_to_delete:
+        del st.session_state[key]
     st.toast("Logged out successfully!", icon="👋")
-    time.sleep(1) # Small delay to show the toast
+    time.sleep(10) # Small delay to show the toast
     st.rerun()
 
 # --- Page Rendering Functions ---
@@ -678,7 +773,7 @@ def main():
     init_db()
     # Now includes checking for persistent session file
     initialize_session_state()
-
+    st.json(st.session_state)
     # 2. Sidebar/Navigation
     with st.sidebar:
         st.header("App Navigation")
@@ -718,6 +813,7 @@ def main():
                     st.session_state['page'] = 'admin'
 
             st.markdown("---")
+            st.markdown(f"### Account Actions {cookies}")
             st.button("Logout", on_click=logout_user, use_container_width=True, type="primary", key="logout_btn")
 
         else:

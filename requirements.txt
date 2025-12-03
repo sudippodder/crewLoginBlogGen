@@ -1,6 +1,6 @@
 streamlit
 Flask>=2.3.0
-
+streamlit-cookies-manager
 # CrewAI
 crewai>=0.40.0
 crewai-tools>=0.5.0
