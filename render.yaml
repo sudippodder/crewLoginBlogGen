@@ -24,3 +24,5 @@ services:
         value: "0" # placeholder - Render will override with runtime $PORT
       - key: PYTHON_VERSION
         value: "3.12"
+      - key: CREWAI_TRACING_ENABLED
+        value: "true"
