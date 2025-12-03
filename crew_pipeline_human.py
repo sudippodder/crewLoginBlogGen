@@ -85,7 +85,7 @@ def run_safe_pipeline_with_progress(crew, tasks):
             PROGRESS_LOG.append({'status': 'STARTING', 'index': i, 'agent': agent_name, 'desc': task_desc})
 
             # NOTE: Create a minimal crew to run only this single task (required for logging between tasks)
-            single_task_crew = Crew(agents=[task.agent], tasks=[task], verbose=False)
+            single_task_crew = Crew(agents=[task.agent], tasks=[task], verbose=False,memory=True, process="sequential",tracing=True )
 
             try:
                 task_result = single_task_crew.kickoff(inputs={})
@@ -433,7 +433,7 @@ def run_pipeline(topic: str,
     # st.json(agents)
     # st.json(tasks)
     # ---------------- Run crew ----------------
-    crew = Crew(agents=agents, tasks=tasks, verbose=True)
+    crew = Crew(agents=agents, tasks=tasks, verbose=True, process="sequential", memory=True, tracing=True)
     return run_safe_pipeline_with_progress(crew, tasks)
 
 # ---------------- Example run helper (Streamlit UI) ----------------
