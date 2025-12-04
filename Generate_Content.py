@@ -238,7 +238,8 @@ def generate_content_page():
     #st.json(row[9])
     # if row[9] != None and row[9] != "":
     #     detection_result = json.loads(row[9])
-    if row[9] != None and row[9] != "":
+
+    if row and row[9] is not None and row[9] != "":
         #st.session_state.generated_content = results
         param = json.loads(row[9])
         data = param.get("data", {})
