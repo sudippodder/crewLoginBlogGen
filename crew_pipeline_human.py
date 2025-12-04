@@ -85,7 +85,7 @@ def run_safe_pipeline_with_progress(crew, tasks):
             PROGRESS_LOG.append({'status': 'STARTING', 'index': i, 'agent': agent_name, 'desc': task_desc})
 
             # NOTE: Create a minimal crew to run only this single task (required for logging between tasks)
-            single_task_crew = Crew(agents=[task.agent], tasks=[task], verbose=False,memory=True, process="sequential",tracing=True )
+            single_task_crew = Crew(agents=[task.agent], tasks=[task], verbose=True, memory=True, process="sequential",tracing=True )
 
             try:
                 task_result = single_task_crew.kickoff(inputs={})
