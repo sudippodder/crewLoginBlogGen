@@ -30,6 +30,8 @@ from crew_safe_llm import CrewSafeLLM
 logging.basicConfig(level=logging.INFO)
 load_dotenv()
 
+session_id = str(uuid.uuid4())
+os.environ['CREW_SESSION_ID'] = session_id
 
 def _uniq(name: str) -> str:
     return f"{name}-{uuid.uuid4().hex[:6]}"
@@ -85,7 +87,7 @@ def run_safe_pipeline_with_progress(crew, tasks):
             PROGRESS_LOG.append({'status': 'STARTING', 'index': i, 'agent': agent_name, 'desc': task_desc})
 
             # NOTE: Create a minimal crew to run only this single task (required for logging between tasks)
-            single_task_crew = Crew(agents=[task.agent], tasks=[task], verbose=True, memory=True, process="sequential",tracing=True )
+            single_task_crew = Crew(agents=[task.agent], tasks=[task], verbose=True, process="sequential",tracing=True )
 
             try:
                 task_result = single_task_crew.kickoff(inputs={})
@@ -433,7 +435,7 @@ def run_pipeline(topic: str,
     # st.json(agents)
     # st.json(tasks)
     # ---------------- Run crew ----------------
-    crew = Crew(agents=agents, tasks=tasks, verbose=True, process="sequential", memory=True, tracing=True)
+    crew = Crew(agents=agents, tasks=tasks, verbose=True, process="sequential", tracing=True)
     return run_safe_pipeline_with_progress(crew, tasks)
 
 # ---------------- Example run helper (Streamlit UI) ----------------

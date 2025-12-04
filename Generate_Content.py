@@ -173,7 +173,7 @@ def generate_content_page():
                     )
 
                     # REDIRECT
-                    #redirect_to_edit(record_id)
+                    redirect_to_edit(record_id)
                     # if "error" in detection_result:
                     #     st.error(detection_result["error"])
                     # else:
