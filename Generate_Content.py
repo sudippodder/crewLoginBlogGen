@@ -73,15 +73,14 @@ def generate_content_page():
     topic = st.text_input("Enter your topic:", value=(row and row[1] if row and row[1] is not None else ""), placeholder="e.g. AI tools for marketing")
 
     with st.expander("Researcher Settings", expanded=True):
-        researcher_goal = st.text_area("Goal", value=(row[2] is not None and row[2] or "Find and summarize useful content for the given topic."), placeholder="Find and summarize useful content for the given topic.")
-        researcher_backstory = st.text_area("Backstory", value=(row[3] is not None and row[3] or "You're great at finding relevant sources."), placeholder="You're great at finding relevant sources.")
+        researcher_goal = st.text_area("Goal", value=(row and row[2] if row and row[2] is not None else "Find and summarize useful content for the given topic."), placeholder="Find and summarize useful content for the given topic.")
+        researcher_backstory = st.text_area("Backstory", value=(row and row[3] if row and row[3] is not None else "You're great at finding relevant sources."), placeholder="You're great at finding relevant sources.")
     with st.expander("Writer Settings", expanded=True):
-        writer_goal = st.text_area("Goal", value=(row[4] is not None and row[4] or "Write a detailed, SEO-friendly blog post using the research."), placeholder="Write a detailed, SEO-friendly blog post using the research.")
-        writer_backstory = st.text_area("Backstory", value=(row[5] is not None and row[5] or "You're skilled at clarity and engagement."), placeholder="You're skilled at clarity and engagement.")
-
+        writer_goal = st.text_area("Goal", value=(row and row[4] if row and row[4] is not None else "Write a detailed, SEO-friendly blog post using the research."), placeholder="Write a detailed, SEO-friendly blog post using the research.")
+        writer_backstory = st.text_area("Backstory", value=(row and row[5] if row and row[5] is not None else "You're skilled at clarity and engagement."), placeholder="You're skilled at clarity and engagement.")
     with st.expander("Editor Settings", expanded=True):
-        editor_goal = st.text_area("Goal", value=(row[6] is not None and row[6] or "Polish and refine the blog content for tone, clarity, and grammar."), placeholder="Polish and refine the blog content for tone, clarity, and grammar.")
-        editor_backstory = st.text_area("Backstory", value=(row[7] is not None and row[7] or "You ensure it reads naturally and maintains tone."), placeholder="You ensure it reads naturally and maintains tone.")
+        editor_goal = st.text_area("Goal", value=(row and row[6] if row and row[6] is not None else "Polish and refine the blog content for tone, clarity, and grammar."), placeholder="Polish and refine the blog content for tone, clarity, and grammar.")
+        editor_backstory = st.text_area("Backstory", value=(row and row[7] if row and row[7] is not None else "You ensure it reads naturally and maintains tone."), placeholder="You ensure it reads naturally and maintains tone.")
 
     if "generated_content" not in st.session_state:
         st.session_state.generated_content = None
