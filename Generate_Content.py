@@ -70,7 +70,7 @@ def generate_content_page():
     st.title("✍️ Generate AI Blog Content")
 
     st.dataframe({'Tones':common.get_all_personalities()})
-    topic = st.text_input("Enter your topic:", value=(row[1] is not None and row[1] or ""), placeholder="e.g. AI tools for marketing")
+    topic = st.text_input("Enter your topic:", value=(row and row[1] if row and row[1] is not None else ""), placeholder="e.g. AI tools for marketing")
 
     with st.expander("Researcher Settings", expanded=True):
         researcher_goal = st.text_area("Goal", value=(row[2] is not None and row[2] or "Find and summarize useful content for the given topic."), placeholder="Find and summarize useful content for the given topic.")
