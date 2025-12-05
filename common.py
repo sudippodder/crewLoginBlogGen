@@ -135,6 +135,11 @@ def get_selected_tones_by_user(user_id):
     #suggested_agents = role_json.get("micro_agent_list") if isinstance(role_json, dict) else None
     result = [item for arr in res for item in arr]
     #result = res.flat()
+    if not result:
+        result = [
+            'sarcastic friend','nostalgic storyteller','curious teacher','chaotic thinker','casual confidant',
+            'skeptical critic','optimistic mentor','grumpy old-timer','chatty neighbor','daydreamer'
+        ]
     conn.close()
     return result
 
@@ -173,6 +178,11 @@ def get_all_personalities(user_id=None):
     #posts = [json.loads(row[0]) for row in posts]  # Parse JSON strings into Python objects
     #suggested_agents = role_json.get("micro_agent_list") if isinstance(role_json, dict) else None
     result = [item for arr in res for item in arr]
+    if not result:
+        result = [
+            'sarcastic friend','nostalgic storyteller','curious teacher','chaotic thinker','casual confidant',
+            'skeptical critic','optimistic mentor','grumpy old-timer','chatty neighbor','daydreamer'
+        ]
     #result = res.flat()
     conn.close()
     return result

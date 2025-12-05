@@ -257,3 +257,4 @@ def generate_content_page():
         #st.subheader("🧩 AI Detection Results")
         if st.session_state.detection_result:
             display_highlighted_text(st.session_state.detection_result)
+    return

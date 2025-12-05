@@ -1,3 +1,16 @@
+"""
+Compact Optimized CrewAI v3 — Human-likeness focused pipeline (structure B)
+Target: 85-95% human-likeness
+
+Features:
+- Compact, detector-resistant ordering
+- Researcher -> Writer -> 3 Micro Humanizers -> MemoryNoise -> RhythmBreaker -> Overthinker -> EntropyBreaker -> Imperfection-friendly Editor -> Final Disorder -> Publisher
+- Model-mixing entropy pass (different LLM) to break model signatures
+- Tunable parameters at top for fast experimentation
+
+Drop-in: replace your current pipeline with this file. Tune PASSES_PER_SECTION, MICRO_COUNTS, and model names.
+"""
+
 import os
 import time
 import uuid
@@ -8,7 +21,6 @@ from dotenv import load_dotenv
 import streamlit as st
 import json
 
-# Assuming 'common', 'tools.serper_tool', and 'crew_safe_llm' modules exist
 import common
 from crewai import Agent, Task, Crew
 from tools.serper_tool import SerperTool
@@ -34,13 +46,19 @@ def safe_output_to_json(result):
     except Exception as e:
         return {'error': str(e)}
 
-# Global log for progress tracking
-PROGRESS_LOG = []
 
-def run_safe_pipeline_with_progress(crew, tasks, topic: str):
+
+
+# Assuming the run_pipeline and CrewAI setup are in place...
+
+
+
+# PROGRESS_LOG = []
+
+def run_safe_pipeline_with_progress(crew, tasks):
     """
-    FIXED: Runs the CrewAI pipeline with task-by-task progress, ensuring the output
-    of the previous task is fed as input to the next one to maintain the draft continuity.
+    Corrected version of V8. Runs the CrewAI pipeline with task-by-task progress.
+    Fixes the 'Task Log' appending issue by using a dedicated placeholder inside the container.
     """
 
     global PROGRESS_LOG
@@ -48,21 +66,19 @@ def run_safe_pipeline_with_progress(crew, tasks, topic: str):
     total = len(tasks)
 
     result_container = {'result': None}
-    # 🌟 FIX 1: Variable to hold the intermediate result (the evolving article draft)
-    intermediate_draft = ""
 
     # 1. DEFINE PERMANENT UI ELEMENTS
     st.markdown("## 📋 Pipeline Execution Log")
     detailed_log_container = st.container()
-
+    #st.json(PERSONALITIES)
+    # Define the placeholder once inside the permanent container
     with detailed_log_container:
-        st.markdown("### Task Details")
-        task_list_placeholder = st.empty()
+        st.markdown("### Task Details") # Keep the heading static
+        task_list_placeholder = st.empty() # THIS is the element we will update repeatedly
 
     def run_crew_sequential():
+        # ... (run_crew_sequential remains the same as in V7/V8)
         nonlocal result_container
-        # 🌟 FIX 2: Allow modification of the draft variable
-        nonlocal intermediate_draft
 
         for i, task in enumerate(tasks):
             agent_name = task.agent.role
@@ -73,25 +89,10 @@ def run_safe_pipeline_with_progress(crew, tasks, topic: str):
             # NOTE: Create a minimal crew to run only this single task (required for logging between tasks)
             single_task_crew = Crew(agents=[task.agent], tasks=[task], verbose=True, process="sequential",tracing=True )
 
-            # 🌟 FIX 3: Prepare inputs dynamically based on task index
-            if i == 0:
-                # Task 0 (Researcher): Needs only the original topic
-                task_inputs = {'topic': topic}
-            elif i == 1:
-                # Task 1 (Writer): Needs the topic and the research notes (intermediate_draft)
-                task_inputs = {'topic': topic, 'draft_content': intermediate_draft}
-            else:
-                # All subsequent tasks operate on the modified article/draft.
-                task_inputs = {'draft_content': intermediate_draft}
-
             try:
-                # 🌟 FIX 4: Pass the prepared inputs to the isolated task kickoff
-                task_result = single_task_crew.kickoff(inputs=task_inputs)
+                task_result = single_task_crew.kickoff(inputs={})
 
                 PROGRESS_LOG.append({'status': 'FINISHED', 'index': i, 'agent': agent_name, 'result': task_result})
-
-                # 🌟 FIX 5: Update the intermediate draft for the next agent
-                intermediate_draft = str(task_result)
 
                 if i == total - 1:
                     result_container['result'] = task_result
@@ -105,7 +106,7 @@ def run_safe_pipeline_with_progress(crew, tasks, topic: str):
 
 
     thread = threading.Thread(target=run_crew_sequential)
-
+    #st.stop()
     # 2. Block the UI with st.spinner
     with st.spinner("Initializing Crew and Agents..."):
 
@@ -171,7 +172,14 @@ def run_safe_pipeline_with_progress(crew, tasks, topic: str):
     return final_result
 
 
+
+
 # ---------------- Config (tune these) ----------------
+# MICRO_INTRO = 2
+# MICRO_BODY = 4
+# MICRO_CONCLUSION = 2
+# PASSES_PER_SECTION = int(os.getenv('HUMANIZER_REFINEMENTS', 1))
+# MAX_REAL_TASKS = 40
 MICRO_INTRO = 2
 MICRO_BODY = 4
 MICRO_CONCLUSION = 2
@@ -189,27 +197,35 @@ if "user_info" not in st.session_state:
     ]
 else:
     user = st.session_state.get("user_info")
+    #user = st.session_state['user_info']
     try:
         user_id = user['id']
     except TypeError:
+        # This catches the 'NoneType' object is not subscriptable error
         print("Error: Failed to retrieve user data (variable 'user' is None).")
         user_id = None
+    #user_id = user['id']
     selected_tones = common.get_selected_tones_by_user(user_id)
     PERSONALITIES = selected_tones if selected_tones else PERSONALITIES
+
+
+
+
 
 
 PRIMARY_MODEL = os.getenv('PRIMARY_MODEL', 'gpt-4.1-mini')
 ENTROPY_MODEL = os.getenv('ENTROPY_MODEL', 'gpt-4o-mini')
 
 # ---------------- Pipeline builder (compact B) ----------------
+#st.json(PERSONALITIES)
 
 def run_pipeline(topic: str,
-                              researcher_goal: str,
-                              writer_goal: str,
-                              editor_goal: str,
-                              researcher_backstory: str = "Experienced researcher",
-                              writer_backstory: str = "Practical messy writer",
-                              editor_backstory: str = "Editor preserving human flaws"):
+                         researcher_goal: str,
+                         writer_goal: str,
+                         editor_goal: str,
+                         researcher_backstory: str = "Experienced researcher",
+                         writer_backstory: str = "Practical messy writer",
+                         editor_backstory: str = "Editor preserving human flaws"):
     """Builds and executes the compact, optimized pipeline for a given topic."""
 
     serper = SerperTool()
@@ -254,13 +270,13 @@ def run_pipeline(topic: str,
         return a
 
     # create small set of micro agents
-    # 🌟 FIX 6: Update task description to reference {{draft_content}}
+    idx = 1
     for i in range(1, MICRO_INTRO+1):
-        a = make_micro('intro', i); micro_agents.append(a); micro_tasks.append(Task(description=f"Rewrite micro-intro {i} of the draft: {{draft_content}}", expected_output=f"intro-{i}", agent=a))
+        a = make_micro('intro', i); micro_agents.append(a); micro_tasks.append(Task(description=f"Rewrite micro-intro {i}", expected_output=f"intro-{i}", agent=a))
     for i in range(1, MICRO_BODY+1):
-        a = make_micro('body', i); micro_agents.append(a); micro_tasks.append(Task(description=f"Rewrite micro-body {i} of the draft: {{draft_content}}", expected_output=f"body-{i}", agent=a))
+        a = make_micro('body', i); micro_agents.append(a); micro_tasks.append(Task(description=f"Rewrite micro-body {i}", expected_output=f"body-{i}", agent=a))
     for i in range(1, MICRO_CONCLUSION+1):
-        a = make_micro('conclusion', i); micro_agents.append(a); micro_tasks.append(Task(description=f"Rewrite micro-conclusion {i} of the draft: {{draft_content}}", expected_output=f"conclusion-{i}", agent=a))
+        a = make_micro('conclusion', i); micro_agents.append(a); micro_tasks.append(Task(description=f"Rewrite micro-conclusion {i}", expected_output=f"conclusion-{i}", agent=a))
 
     # 4) Memory noise agent (global small inconsistencies)
     memory_noise = Agent(
@@ -334,14 +350,9 @@ def run_pipeline(topic: str,
 
     # ---------------- Build tasks ----------------
     tasks = [
-        # Task 0 (Researcher): Needs topic. Output is passed to Task 1 as {{draft_content}}.
-        Task(description=f"Research '{{topic}}' with interpretive notes. Output ONLY the interpretive notes.", expected_output='research-notes', agent=researcher),
-
-        # Task 1 (Writer): Needs topic and research notes ({{draft_content}}). Output is the raw draft.
-        Task(description=f"Write messy raw draft for '{{topic}}' using the following research notes: {{draft_content}}.", expected_output='raw-draft', agent=writer),
-
-        # Task 2 (Editor): Needs draft ({{draft_content}}).
-        Task(description='Light edit (keep voice) of the following draft: {{draft_content}}.', expected_output='light-edited', agent=editor),
+        Task(description=f"Research '{topic}' with interpretive notes.", expected_output='research-notes', agent=researcher),
+        Task(description=f"Write messy raw draft for '{topic}'.", expected_output='raw-draft', agent=writer),
+        Task(description='Light edit (keep voice).', expected_output='light-edited', agent=editor),
     ]
 
     # micro rewrite tasks
@@ -352,21 +363,18 @@ def run_pipeline(topic: str,
     for idx, m in enumerate(micro_agents, start=1):
         for p in range(1, PASSES_PER_SECTION+1):
             if len(refinement_tasks) < MAX_REAL_TASKS:
-                # 🌟 FIX 6: Update task description to reference {{draft_content}}
-                refinement_tasks.append(Task(description=f"Refine micro {idx} pass {p}: add small digression/hesitancy to the draft: {{draft_content}}.", expected_output=f"micro-{idx}-p{p}", agent=m))
+                refinement_tasks.append(Task(description=f"Refine micro {idx} pass {p}: add small digression/hesitancy.", expected_output=f"micro-{idx}-p{p}", agent=m))
     tasks.extend(refinement_tasks)
 
     # injectors: memory noise + rhythm
-    # 🌟 FIX 6: Update task description to reference {{draft_content}}
-    tasks.append(Task(description='Introduce tiny memory inconsistencies across the draft: {{draft_content}}.', expected_output='memory-noise', agent=memory_noise))
-    tasks.append(Task(description='Apply rhythm changes across draft to break sentence length regularity. Draft: {{draft_content}}.', expected_output='rhythm-changed', agent=rhythm))
+    tasks.append(Task(description='Introduce tiny memory inconsistencies across the draft.', expected_output='memory-noise', agent=memory_noise))
+    tasks.append(Task(description='Apply rhythm changes across draft to break sentence length regularity.', expected_output='rhythm-changed', agent=rhythm))
 
     # merge & global passes: overthink -> entropy -> final disorder -> publisher
-    # 🌟 FIX 6: Update task description to reference {{draft_content}}
-    tasks.append(Task(description='Overthink full-document messy pass on draft: {{draft_content}}.', expected_output='overthought-draft', agent=overthink))
-    #tasks.append(Task(description='Entropy model-mix rewrite to break model fingerprints. Draft: {{draft_content}}.', expected_output='entropy-draft', agent=entropy))
-    tasks.append(Task(description='Final readable disorder pass on draft: {{draft_content}}.', expected_output='final-disorder', agent=final_disorder))
-    #tasks.append(Task(description='Format article for publish (markdown). Draft: {{draft_content}}.', expected_output='publish-ready', agent=publisher))
+    tasks.append(Task(description='Overthink full-document messy pass.', expected_output='overthought-draft', agent=overthink))
+    #tasks.append(Task(description='Entropy model-mix rewrite to break model fingerprints.', expected_output='entropy-draft', agent=entropy))
+    tasks.append(Task(description='Final readable disorder pass.', expected_output='final-disorder', agent=final_disorder))
+    #tasks.append(Task(description='Format article for publish (markdown).', expected_output='publish-ready', agent=publisher))
 
     # assemble agents list
     agents = [
@@ -376,11 +384,15 @@ def run_pipeline(topic: str,
         overthink,
         final_disorder
     ]
+    #, entropy
+    #, publisher
+    # st.json({'total_agents': len(agents), 'total_tasks': len(tasks)})
+    # st.json(agents)
+    # st.json(tasks)
     # ---------------- Run crew ----------------
 
 
     crew = Crew(agents=agents, tasks=tasks, verbose=True, process="sequential", tracing=True)
-    # 🌟 FIX 7: Pass the topic to the progress function so it can be used in kickoff
     return run_safe_pipeline_with_progress(crew, tasks, topic=topic)
 
 # ---------------- Example run helper (Streamlit UI) ----------------
@@ -395,3 +407,5 @@ if __name__ == '__main__':
             editor_goal='Lightly edit for clarity but preserve mess.'
         )
         st.json(out)
+
+# End of file

@@ -1,3 +1,4 @@
+import importlib
 import streamlit as st
 import sqlite3
 import hashlib
@@ -6,6 +7,7 @@ import pandas as pd
 import json # Added for session persistence
 import os   # Added for file path management
 import generatecontent
+importlib.reload(generatecontent)
 import urllib.parse
 from dotenv import load_dotenv
 import micro_humanizer_generator
@@ -597,6 +599,7 @@ def show_post_content():
     This multi-agent system can be used anywhere content needs to be created, refined, and published regularly. Some examples include: SEO-friendly blogs and articles, generating social media posts, newsletters, campaign content , product descriptions, guides, promotional blogs, newsletters, announcements, reports.
     """, unsafe_allow_html=True)
     st.markdown("---")
+    st.markdown(generatecontent.__file__)
     # --- GENERATE BUTTON ---
     generatecontent.generate_content_page()
     # --- Post Creation Form ---
@@ -938,7 +941,7 @@ def main():
 
             # Added 'Posts' to the list of pages
             #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
-            user_pages = ['Dashboard', 'Profile', 'Tone','Content','DB' ]
+            user_pages = ['Dashboard', 'Profile', 'Tone','Content' ]
             # Determine the correct index for the current page selection
             try:
                 current_index = user_pages.index(st.session_state['page'].capitalize())
@@ -948,7 +951,7 @@ def main():
             if 'refresh' in query_params and query_params['refresh'].lower() == 'true':
                 current_index = 3
             # Use radio buttons for clear, responsive navigation selection
-            st.markdown(f"### Navigate to: {current_index}")
+            #st.markdown(f"### Navigate to: {current_index}")
             current_selection = st.radio(
                 "Go to:",
                 user_pages,
