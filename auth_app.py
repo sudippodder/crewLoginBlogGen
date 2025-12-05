@@ -781,6 +781,21 @@ def show_tone_page():
                 """, unsafe_allow_html=True)
     else:
         st.info("You haven't published any posts yet. Use the form above to create your first one!")
+def delete_content(content_id, user_id):
+    """Deletes a content entry from the content_history table for a specific user."""
+    try:
+        conn = sqlite3.connect(DATABASE_FILE)
+        c = conn.cursor()
+        # Ensure the content belongs to the user to prevent unauthorized deletion
+        c.execute("DELETE FROM content_history WHERE id = ? AND user_id = ?", (content_id, user_id))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Error deleting content: {e}")
+        return False
+# --- Persistent Session State Functions ---
+
 
 def list_gen_content():
     """Renders the Post creation and viewing page (NEW)."""
@@ -811,7 +826,7 @@ def list_gen_content():
     # --- Post Viewing Section ---
     st.subheader("📝 Content List")
 
-    user_tones = get_content_by_user(user_id)
+    user_content = get_content_by_user(user_id)
     #st.json(user_tones)
 
     # selected_tones = common.get_selected_tones_by_user(user_id)
@@ -819,84 +834,51 @@ def list_gen_content():
     #generated_json (7) created_at	is_active	user_id
 
 
-    if user_tones:
-        for tone in user_tones:
-            tone_id = tone[0]
-            #is_active = tone[9] if len(tone) > 9 else 0
-            with st.container():
-                link_text = tone[1]
+    if user_content:
+        for content_item in user_content:
+            content_id = content_item[0]
+            link_text = content_item[1]
+            created_at = content_item[10]
 
-                anchor_target = "form_start"
-                user_name = "Jane Doe"
-                #encoded_mode = urllib.parse.quote(link_text)
-                #link_href = f"/?mode={encoded_mode}&id={user_id}"
-                #link_text = f"Edit Details for {user_name}"
-                #final_link = f"[{link_text}]({link_href})"
-                #[Link](**?mode=Edit&user_id=101#form_start**)
-                #clickable_link = f"**[{link_text}]({link_href})**"
-                #clickable_link = f"**[{link_text}]({link_href})**"
+            # Use st.columns to place the content title/link and the button side-by-side
+            col_content, col_delete = st.columns([0.8, 0.2])
 
-                st.markdown("""
-                    <style>
-                        .custom-card {
-                            border: 1px solid #ffcc80;
-                            padding: 15px;
-                            margin-bottom: 15px;
-                            border-radius: 8px;
-                            background-color: #fff3e0;
-                        }
-                        .custom-card h4 {
-                            margin-top: 0;
-                            color: #e65100;
-                        }
-                    </style>
-                    """, unsafe_allow_html=True)
+            with col_content:
+                # Custom HTML/Markdown for the content card and edit link
+                link_href = f"?id={content_id}&mode=edit&refresh=true"
+                st.markdown(f"""
+                    <div style="border: 1px solid #ffcc80; padding: 15px; margin-bottom: 15px; border-radius: 8px; background-color: #fff3e0;">
+                        <h4 style="margin-top: 0; color: #e65100;">
+                            <a href="/?refresh=true&page=content&id={content_id}&mode=edit" target="_self">{link_text}</a>
+                        </h4>
+                        <p style="font-size: 0.9em; color: #666; font-style: italic;">
+                            Posted on {created_at}
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
 
-                # 2. Render the Markdown link *inside* the container
-
-
-
-                #clickable_link_variable = f"**[{link_text}]({link_href})**"
-                #st.markdown({clickable_link_variable})
-                link_href = f"?id={tone_id}&mode=edit&refresh=true"
-                st.markdown(f"""<div class="custom-card"><h4>
-                            <a href="/?refresh=true&page=content&id={tone_id}&mode=edit" target="_self">{link_text}</a></h4>
-                                <p style="font-size: 0.9em; color: #666; font-style: italic;">
-                                Posted on {tone[10]}
-                                </p>
-                                </div>""", unsafe_allow_html=True)
-
-                # st.markdown(
-                #     """
-                #     Click the link below to jump past all the content!
-                #     * **[Jump to the Details Section](#section_details)**
-                #     ---
-                #     """
-                # )
-                #col1, col2 = st.columns([0, 1])
-                # active_checkbox = col1.checkbox(
-                #     "Active",
-                #     value=bool(is_active),
-                #     key=f"active_{tone_id}"
-                # )
-                # if active_checkbox != bool(is_active):
-                #     update_tone_active(tone_id, int(active_checkbox))
-                #     st.toast(f"Updated: {tone[1]}")  # Small popup notification
-                #     st.rerun()  # Refresh UI
-
-                # col2.markdown(f"""
-                #     <div style="border: 1px solid #ffcc80; padding: 15px; margin-bottom: 15px; border-radius: 8px; background-color: #fff3e0;">
-                #         <h4 style="margin-top: 0; color: #e65100;">{tone[1]}</h4>
-                #         <p style="font-size: 0.9em; color: #666; font-style: italic;">
-                #             Posted by {tone[10]} on {tone[8].split('.')[0]}
-                #         </p>
-                #         <p>{show_micro_humanizer_content(tone[7])}</p>
-                #     </div>
-                # """, unsafe_allow_html=True)
+            with col_delete:
+                # Add the delete button with a unique key and the callback function
+                # The button is placed slightly lower to align with the content card
+                st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True) # Spacer
+                st.button(
+                    "Delete 🗑️",
+                    key=f"delete_btn_{content_id}",
+                    on_click=handle_delete_content,
+                    args=(content_id, user_id), # Pass content_id and user_id to the callback
+                    type="secondary",
+                    use_container_width=True
+                )
     else:
         st.info("Content is not created yet!")
 
-
+def handle_delete_content(content_id, user_id):
+    """Callback function to handle content deletion."""
+    if delete_content(content_id, user_id):
+        st.toast(f"Content ID {content_id} deleted successfully!", icon="🗑️")
+    else:
+        st.error(f"Failed to delete Content ID {content_id}.")
+    st.rerun()
 # --- Main Application Layout and Routing ---
 def show_micro_humanizer_content(role_json):
     #st.json(role_json)
@@ -941,7 +923,7 @@ def main():
 
             # Added 'Posts' to the list of pages
             #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
-            user_pages = ['Dashboard', 'Profile', 'Tone','Content' ]
+            user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'DB']
             # Determine the correct index for the current page selection
             try:
                 current_index = user_pages.index(st.session_state['page'].capitalize())
