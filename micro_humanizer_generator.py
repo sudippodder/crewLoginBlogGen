@@ -437,8 +437,9 @@ def default_view():
             generate_btn = st.button("Generate Micro Humanizer Role")
         with coll2:
             if st.button("Back"):
-                common.navigate_to("clear")
+                #common.navigate_to("clear")
                 st.session_state['page'] = "tone"
+                st.session_state['spage'] = ""
                 st.rerun()
 
     with col2:

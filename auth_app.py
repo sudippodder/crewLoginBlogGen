@@ -5,16 +5,19 @@ import time
 import pandas as pd
 import json # Added for session persistence
 import os   # Added for file path management
-from Generate_Content import generate_content_page
+import generate_content
+import urllib.parse
 from dotenv import load_dotenv
 import micro_humanizer_generator
 import common
+import sqlite
 from streamlit_cookies_manager import EncryptedCookieManager
 ENCRYPTION_PASSWORD = "your_strong_secret_key_here"
 # Key under which the user data will be stored in the cookie
 USER_COOKIE_KEY = "user_session_data"
 # Expiry time (in days) for the persistent login
 COOKIE_EXPIRY_DAYS = 30
+#st.markdown(f"{st.session_state}")
 
 cookies = EncryptedCookieManager(prefix="myapp", password="adminapp123")
 if not cookies.ready():
@@ -38,6 +41,8 @@ for k, v in {
     "reg_message": ""
 }.items():
     st.session_state.setdefault(k, v)
+
+query_params = st.query_params
 
 # --- Utility Functions for Hashing ---
 def hash_password(password):
@@ -207,6 +212,23 @@ def get_tones_by_user(user_id):
     c.execute("""
         SELECT p.*
         FROM micro_roles p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.user_id = ?
+        ORDER BY p.created_at DESC
+    """, (user_id,))
+    posts = c.fetchall()
+    conn.close()
+    return  posts
+
+def get_content_by_user(user_id):
+    """Retrieves all tones created by a specific user."""
+    conn = sqlite3.connect(DATABASE_FILE)
+    c = conn.cursor()
+    # Join tones with users to get the username for display
+
+    c.execute("""
+        SELECT p.*
+        FROM content_history p
         JOIN users u ON p.user_id = u.id
         WHERE p.user_id = ?
         ORDER BY p.created_at DESC
@@ -544,9 +566,18 @@ def show_post_content():
     user_id = user['id']
     username = user['username']
 
-    st.title("✍️ Generate Content with Tones")
-    #st.header(f"Create and View Your Content ({username})", divider='orange')
 
+    #st.header(f"Create and View Your Content ({username})", divider='orange')
+    left, right = st.columns([8, 2])
+    with left:
+        st.title("✍️ Generate Content with Tones")
+    #left.header(f"View Your Tones ({username})")  # optional text
+    with right:
+        if st.button("Back", type="primary"):
+            st.session_state['spage'] = ''
+            st.session_state['page'] = 'content'
+            st.rerun()
+            #common.navigate_to("content")
 
     if "detection_result" not in st.session_state:
         st.session_state.detection_result = None
@@ -567,7 +598,7 @@ def show_post_content():
     """, unsafe_allow_html=True)
     st.markdown("---")
     # --- GENERATE BUTTON ---
-    generate_content_page()
+    generate_content.generate_content_page()
     # --- Post Creation Form ---
 
     st.markdown("---")
@@ -623,7 +654,7 @@ def show_post_tone():
                 </div>
             """, unsafe_allow_html=True)
     else:
-        st.info("You haven't published any posts yet. Use the form above to create your first one!")
+        st.info("Tones are not created yet!")
 
 
 def show_admin_page():
@@ -683,7 +714,9 @@ def show_tone_page():
     #left.header(f"View Your Tones ({username})")  # optional text
     with right:
         if st.button("Create Tone", type="primary"):
-            common.navigate_to("addtone")
+            #common.navigate_to("addtone")
+            st.session_state['spage'] = 'addtone'
+            st.rerun()
         #st.session_state['page'] = 'addtone'
         #st.rerun()
         #common.navigate_to("addtone")
@@ -746,6 +779,121 @@ def show_tone_page():
     else:
         st.info("You haven't published any posts yet. Use the form above to create your first one!")
 
+def list_gen_content():
+    """Renders the Post creation and viewing page (NEW)."""
+    user = st.session_state['user_info']
+    user_id = user['id']
+    username = user['username']
+
+    #query_params = st.query_params
+    #st.markdown(f"Mode: {query_params.get('mode')}")
+
+    left, right = st.columns([8, 2])
+    with left:
+        st.title("✍️ My Generated Content List")
+    #left.header(f"View Your Tones ({username})")  # optional text
+    with right:
+        if st.button("Generate Content", type="primary"):
+            #common.navigate_to("gencontent")
+            st.session_state['page'] = 'content'
+            st.session_state['spage'] = 'gencontent'
+            st.session_state.detection_result = ''
+            st.session_state['content_id'] = ''
+            st.rerun()
+            #common.navigate_to("gencontent")
+
+
+    st.markdown("---")
+
+    # --- Post Viewing Section ---
+    st.subheader("📝 Content List")
+
+    user_tones = get_content_by_user(user_id)
+    #st.json(user_tones)
+
+    # selected_tones = common.get_selected_tones_by_user(user_id)
+    # st.json(selected_tones)
+    #generated_json (7) created_at	is_active	user_id
+
+
+    if user_tones:
+        for tone in user_tones:
+            tone_id = tone[0]
+            #is_active = tone[9] if len(tone) > 9 else 0
+            with st.container():
+                link_text = tone[1]
+
+                anchor_target = "form_start"
+                user_name = "Jane Doe"
+                #encoded_mode = urllib.parse.quote(link_text)
+                #link_href = f"/?mode={encoded_mode}&id={user_id}"
+                #link_text = f"Edit Details for {user_name}"
+                #final_link = f"[{link_text}]({link_href})"
+                #[Link](**?mode=Edit&user_id=101#form_start**)
+                #clickable_link = f"**[{link_text}]({link_href})**"
+                #clickable_link = f"**[{link_text}]({link_href})**"
+
+                st.markdown("""
+                    <style>
+                        .custom-card {
+                            border: 1px solid #ffcc80;
+                            padding: 15px;
+                            margin-bottom: 15px;
+                            border-radius: 8px;
+                            background-color: #fff3e0;
+                        }
+                        .custom-card h4 {
+                            margin-top: 0;
+                            color: #e65100;
+                        }
+                    </style>
+                    """, unsafe_allow_html=True)
+
+                # 2. Render the Markdown link *inside* the container
+
+
+
+                #clickable_link_variable = f"**[{link_text}]({link_href})**"
+                #st.markdown({clickable_link_variable})
+                link_href = f"?id={tone_id}&mode=edit&refresh=true"
+                st.markdown(f"""<div class="custom-card"><h4>
+                            <a href="/?refresh=true&page=content&id={tone_id}&mode=edit" target="_self">{link_text}</a></h4>
+                                <p style="font-size: 0.9em; color: #666; font-style: italic;">
+                                Posted on {tone[10]}
+                                </p>
+                                </div>""", unsafe_allow_html=True)
+
+                # st.markdown(
+                #     """
+                #     Click the link below to jump past all the content!
+                #     * **[Jump to the Details Section](#section_details)**
+                #     ---
+                #     """
+                # )
+                #col1, col2 = st.columns([0, 1])
+                # active_checkbox = col1.checkbox(
+                #     "Active",
+                #     value=bool(is_active),
+                #     key=f"active_{tone_id}"
+                # )
+                # if active_checkbox != bool(is_active):
+                #     update_tone_active(tone_id, int(active_checkbox))
+                #     st.toast(f"Updated: {tone[1]}")  # Small popup notification
+                #     st.rerun()  # Refresh UI
+
+                # col2.markdown(f"""
+                #     <div style="border: 1px solid #ffcc80; padding: 15px; margin-bottom: 15px; border-radius: 8px; background-color: #fff3e0;">
+                #         <h4 style="margin-top: 0; color: #e65100;">{tone[1]}</h4>
+                #         <p style="font-size: 0.9em; color: #666; font-style: italic;">
+                #             Posted by {tone[10]} on {tone[8].split('.')[0]}
+                #         </p>
+                #         <p>{show_micro_humanizer_content(tone[7])}</p>
+                #     </div>
+                # """, unsafe_allow_html=True)
+    else:
+        st.info("Content is not created yet!")
+
+
 # --- Main Application Layout and Routing ---
 def show_micro_humanizer_content(role_json):
     #st.json(role_json)
@@ -763,6 +911,7 @@ def show_micro_humanizer_content(role_json):
             return ""
 
 
+
 def main():
     """Main function to run the Streamlit app."""
     st.set_page_config(
@@ -770,7 +919,7 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded"
     )
-
+    #st.json(st.session_state)
     # 1. Database and State Initialization
     init_db()
     # Now includes checking for persistent session file
@@ -789,14 +938,17 @@ def main():
 
             # Added 'Posts' to the list of pages
             #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
-            user_pages = ['Dashboard', 'Profile', 'Tone','Content' ]
+            user_pages = ['Dashboard', 'Profile', 'Tone','Content','DB' ]
             # Determine the correct index for the current page selection
             try:
                 current_index = user_pages.index(st.session_state['page'].capitalize())
             except ValueError:
                 current_index = 0 # Default to Dashboard if page is unknown
-
+            upage = st.query_params.get("page", None)
+            if 'refresh' in query_params and query_params['refresh'].lower() == 'true':
+                current_index = 3
             # Use radio buttons for clear, responsive navigation selection
+            st.markdown(f"### Navigate to: {current_index}")
             current_selection = st.radio(
                 "Go to:",
                 user_pages,
@@ -805,7 +957,28 @@ def main():
             )
 
             # Update page state based on radio button
-            st.session_state['page'] = current_selection.lower()
+
+            #
+            #refresh = query_params.get("refresh", ["false"]).lower()
+            #st.markdown(f"Refresh is {refresh}")
+            # if refresh:
+            #     st.session_state['spage'] = ''
+            #     st.session_state['page'] = 'content'
+            #     st.query_params.clear()
+            #     st.rerun()
+
+            if upage:
+                st.session_state['page'] = upage
+                if 'refresh' in query_params and query_params['refresh'].lower() == 'true' and 'id' in query_params:
+                    st.session_state['spage'] = 'gencontent'
+                    st.session_state['content_id'] = query_params['id']
+                #common.navigate_to("clear")
+            else:
+                st.session_state['page'] = current_selection.lower()
+
+            #st.markdown(f"Navigating to: **{st.session_state['page']}**")
+
+
             # pageSlug = current_selection.lower()
             # common.navigate_to(pageSlug)
             # --- Admin Section (Role-based content) ---
@@ -827,11 +1000,17 @@ def main():
     # 3. Content Routing
     if st.session_state['logged_in']:
         # Show the appropriate page based on the session state
-        upage = st.query_params.get("page", "dashboard")
+        #upage = st.query_params.get("page", "dashboard")
+
+        # if upage not in [None, ""]:
+        #     common.navigate_to("clear")
+        #     st.session_state['page'] = upage
+            #st.rerun()
         page = st.session_state['page']
         # if upage not in [None, ""]:
         #     page = upage[0]
-        #st.markdown(f"## Navigating to: {page}-{upage}.", unsafe_allow_html=True)
+        #st.json(st.session_state)
+        #st.markdown(f"## Navigating to: {page} - {upage}.", unsafe_allow_html=True)
         if page == 'dashboard':
             show_dashboard()
         elif page == 'profile':
@@ -839,11 +1018,25 @@ def main():
         elif page == 'posts':
             show_post_page()
         elif page == 'content':
-            show_post_content()     # NEW Page Routing
+            if 'spage' in st.session_state and st.session_state['spage'] == 'gencontent':
+                show_post_content()
+            else:
+                list_gen_content()
+                 # NEW Page Routing
+        elif upage == 'gencontent':
+            #st.markdown(f"## gencontent", unsafe_allow_html=True)
+                 # NEW Page Routing
+            show_post_content()
         elif upage == 'addtone':
+            #st.markdown(f"## addtone", unsafe_allow_html=True)
             micro_humanizer_generator.default_view()
         elif page == 'tone':
-            show_tone_page()     # NEW Page Routing
+            if 'spage' in st.session_state and st.session_state['spage'] == 'addtone':
+                micro_humanizer_generator.default_view()
+            else:
+                show_tone_page()     # NEW Page Routing
+        elif page == 'db':
+            sqlite.main()     # NEW Page Routing
         elif page == 'admin':
             show_admin_page()
         else:
@@ -853,6 +1046,12 @@ def main():
     else:
         # Show login page if not logged in
         show_login_page()
+
+    #st.markdown(f"---{upage}")
+    if upage:
+        st.query_params.clear()
+
+
 
     st.markdown(
         """

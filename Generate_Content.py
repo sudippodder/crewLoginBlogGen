@@ -24,14 +24,16 @@ def load_record(record_id):
 
 #from tools.serper_tool import SerperTool
 def redirect_to_edit(record_id):
-    st.query_params.update({"id": record_id, "mode": "edit"})
+    #refresh=true&page=content
+    st.query_params.update({"refresh": "true", "page": "content", "id": record_id, "mode": "edit"})
     st.rerun()
 
 def save_output_to_db(topic, researcher_goal, researcher_backstory,
                       writer_goal, writer_backstory,
                       editor_goal, editor_backstory,
                       final_output, detection_result):
-
+    user = st.session_state['user_info']
+    user_id = user['id']
     conn = sqlite3.connect(DATABASE_FILE)
     c = conn.cursor()
 
@@ -40,15 +42,17 @@ def save_output_to_db(topic, researcher_goal, researcher_backstory,
             topic, researcher_goal, researcher_backstory,
             writer_goal, writer_backstory,
             editor_goal, editor_backstory,
-            final_output, detection_result
+            final_output, detection_result,
+            user_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         topic,
         researcher_goal, researcher_backstory,
         writer_goal, writer_backstory,
         editor_goal, editor_backstory,
-        final_output, detection_result
+        final_output, detection_result,
+        user_id
     ))
 
     conn.commit()
@@ -65,7 +69,8 @@ def generate_content_page():
     if mode == "edit" and record_id:
         #st.markdown(record_id, unsafe_allow_html=True)
         row = load_record(record_id)
-        #st.json(row)
+    elif st.session_state.get('spage', '') == 'gencontent' and st.session_state.get('content_id', None):
+        row = load_record(st.session_state.get('content_id'))
 
     st.title("✍️ Generate AI Blog Content")
 

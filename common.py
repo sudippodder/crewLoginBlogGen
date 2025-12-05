@@ -176,3 +176,10 @@ def get_all_personalities(user_id=None):
     #result = res.flat()
     conn.close()
     return result
+
+
+def set_st_session(ss_vars=None,piroty=None):
+    if ss_vars is not None and piroty is None:
+        st.session_state['page'] = ss_vars
+    elif ss_vars is not None and piroty is not None:
+        st.session_state['page'] = piroty
