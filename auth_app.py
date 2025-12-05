@@ -599,7 +599,7 @@ def show_post_content():
     This multi-agent system can be used anywhere content needs to be created, refined, and published regularly. Some examples include: SEO-friendly blogs and articles, generating social media posts, newsletters, campaign content , product descriptions, guides, promotional blogs, newsletters, announcements, reports.
     """, unsafe_allow_html=True)
     st.markdown("---")
-    st.markdown(generatecontent.__file__)
+    #st.markdown(generatecontent.__file__)
     # --- GENERATE BUTTON ---
     generatecontent.generate_content_page()
     # --- Post Creation Form ---
