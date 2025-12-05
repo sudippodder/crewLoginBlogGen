@@ -364,7 +364,7 @@ def run_pipeline(topic: str,
     # merge & global passes: overthink -> entropy -> final disorder -> publisher
     # 🌟 FIX 6: Update task description to reference {{draft_content}}
     tasks.append(Task(description='Overthink full-document messy pass on draft: {{draft_content}}.', expected_output='overthought-draft', agent=overthink))
-    #tasks.append(Task(description='Entropy model-mix rewrite to break model fingerprints. Draft: {{draft_content}}.', expected_output='entropy-draft', agent=entropy))
+    tasks.append(Task(description='Entropy model-mix rewrite to break model fingerprints. Draft: {{draft_content}}.', expected_output='entropy-draft', agent=entropy))
     tasks.append(Task(description='Final readable disorder pass on draft: {{draft_content}}.', expected_output='final-disorder', agent=final_disorder))
     #tasks.append(Task(description='Format article for publish (markdown). Draft: {{draft_content}}.', expected_output='publish-ready', agent=publisher))
 
@@ -373,7 +373,7 @@ def run_pipeline(topic: str,
         researcher, writer, editor,
         *micro_agents,
         memory_noise, rhythm,
-        overthink,
+        overthink, entropy,
         final_disorder
     ]
     # ---------------- Run crew ----------------

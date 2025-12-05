@@ -381,7 +381,7 @@ def run_pipeline(topic: str,
         researcher, writer, editor,
         *micro_agents,
         memory_noise, rhythm,
-        overthink,
+        overthink,entropy,
         final_disorder
     ]
     #, entropy
