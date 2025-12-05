@@ -366,7 +366,7 @@ def run_pipeline(topic: str,
     tasks.append(Task(description='Overthink full-document messy pass on draft: {{draft_content}}.', expected_output='overthought-draft', agent=overthink))
     tasks.append(Task(description='Entropy model-mix rewrite to break model fingerprints. Draft: {{draft_content}}.', expected_output='entropy-draft', agent=entropy))
     tasks.append(Task(description='Final readable disorder pass on draft: {{draft_content}}.', expected_output='final-disorder', agent=final_disorder))
-    #tasks.append(Task(description='Format article for publish (markdown). Draft: {{draft_content}}.', expected_output='publish-ready', agent=publisher))
+    tasks.append(Task(description='Format article for publish (markdown). Draft: {{draft_content}}.', expected_output='publish-ready', agent=publisher))
 
     # assemble agents list
     agents = [
@@ -374,7 +374,8 @@ def run_pipeline(topic: str,
         *micro_agents,
         memory_noise, rhythm,
         overthink, entropy,
-        final_disorder
+        final_disorder,
+        publisher
     ]
     # ---------------- Run crew ----------------
 
