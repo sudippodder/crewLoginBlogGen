@@ -5,7 +5,7 @@ import time
 import pandas as pd
 import json # Added for session persistence
 import os   # Added for file path management
-import generate_content
+import generatecontent
 import urllib.parse
 from dotenv import load_dotenv
 import micro_humanizer_generator
@@ -598,7 +598,7 @@ def show_post_content():
     """, unsafe_allow_html=True)
     st.markdown("---")
     # --- GENERATE BUTTON ---
-    generate_content.generate_content_page()
+    generatecontent.generate_content_page()
     # --- Post Creation Form ---
 
     st.markdown("---")
