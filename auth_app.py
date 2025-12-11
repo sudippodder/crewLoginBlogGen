@@ -923,7 +923,7 @@ def main():
 
             # Added 'Posts' to the list of pages
             #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
-            user_pages = ['Dashboard', 'Profile', 'Tone','Content','DB' ]
+            user_pages = ['Dashboard', 'Profile', 'Tone','Content' ]
             #,'DB'
             # Determine the correct index for the current page selection
             try:
