@@ -1,4 +1,5 @@
 import re
+import time
 import streamlit as st
 from zerogpt_api import check_ai_content
 import common
@@ -33,7 +34,7 @@ def display_highlighted_text(detection_result):
     # Initialize session state
     st.session_state.setdefault("show_editor", False)
     st.session_state.setdefault("editable_text", highlighted_text)
-
+    st.session_state.setdefault("record_id", record_id)
     # --- Section Header ---
     #st.markdown("---")
     st.markdown("### 📝 Detected Content")
@@ -157,11 +158,18 @@ def display_highlighted_text(detection_result):
                     st.session_state.detection_result = new_detection
                     st.session_state.show_editor = False
                     st.session_state.editable_text = edited_text
-                    common.update_output_to_db(
-                    record_id,
-                    final_output=edited_text,
-                    detection_result=json.dumps(new_detection)
-                    )
+                    #st.markdown(f"### 1text {edited_text}")
+                    #st.markdown(f"### 2text {new_detection}")
+                    record_id = st.session_state.record_id
+                    if record_id:
+                        common.update_output_to_db(
+                        record_id,
+                        final_output=edited_text,
+                        detection_result=json.dumps(new_detection)
+                        )
+                    else:
+                        st.warning("⚠️ No record ID found in URL parameters. Changes not saved to database.")
+                        time.sleep(5)
                     st.success("✅ Recheck complete!")
                     st.rerun()
         with col2:

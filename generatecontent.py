@@ -162,10 +162,11 @@ def generate_content_page():
                     st.session_state.editable_text = results
                     #st.json(results)
                     # ----- AI Detection (Send final text ONLY) -----
+                    #st.markdown("### 🧩 {results}".format(results="AI Detection Results")   )
                     detection_result = check_ai_content(results)
 
-                        #st.json(detection_result)
-
+                    #st.json(detection_result)
+                    #st.markdown("### 🧩 {detection_result}".format(detection_result="AI Detection Results"))
                     st.session_state.detection_result = detection_result
                     record_id = save_output_to_db(
                         topic,
@@ -176,7 +177,7 @@ def generate_content_page():
                     )
 
                     # REDIRECT
-                    redirect_to_edit(record_id)
+                    #redirect_to_edit(record_id)
                     # if "error" in detection_result:
                     #     st.error(detection_result["error"])
                     # else:
@@ -243,6 +244,7 @@ def generate_content_page():
     #st.json(row[9])
     # if row[9] != None and row[9] != "":
     #     detection_result = json.loads(row[9])
+
 
     if row and row[9] is not None and row[9] != "":
         #st.session_state.generated_content = results

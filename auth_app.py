@@ -475,22 +475,22 @@ def show_dashboard():
     st.markdown("---")
 
     # Custom dashboard content
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Tasks", "12", "-2 overdue")
-    with col2:
-        st.metric("Team Members", "4", "New")
-    with col3:
-        # Use the stored user ID (user['id']) for reference
-        st.metric("Your User ID", f"{user['id']}", "")
+    # col1, col2, col3 = st.columns(3)
+    # with col1:
+    #     st.metric("Total Tasks", "12", "-2 overdue")
+    # with col2:
+    #     st.metric("Team Members", "4", "New")
+    # with col3:
+    #     # Use the stored user ID (user['id']) for reference
+    #     st.metric("Your User ID", f"{user['id']}", "")
 
-    st.subheader("Recent Activity")
-    activity_data = {
-        'Time': ['10:30 AM', '09:15 AM', 'Yesterday'],
-        'Event': ['Updated project roadmap', 'Created new task: "Fix bug"', 'Logged out'],
-        'Status': ['Completed', 'In Progress', 'System']
-    }
-    st.table(activity_data)
+    # st.subheader("Recent Activity")
+    # activity_data = {
+    #     'Time': ['10:30 AM', '09:15 AM', 'Yesterday'],
+    #     'Event': ['Updated project roadmap', 'Created new task: "Fix bug"', 'Logged out'],
+    #     'Status': ['Completed', 'In Progress', 'System']
+    # }
+    # st.table(activity_data)
 
 
 def show_profile():
@@ -575,7 +575,7 @@ def show_post_content():
         st.title("✍️ Generate Content with Tones")
     #left.header(f"View Your Tones ({username})")  # optional text
     with right:
-        if st.button("Back", type="primary"):
+        if st.button("List", type="primary"):
             st.session_state['spage'] = ''
             st.session_state['page'] = 'content'
             st.rerun()
@@ -923,7 +923,7 @@ def main():
 
             # Added 'Posts' to the list of pages
             #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
-            user_pages = ['Dashboard', 'Profile', 'Tone','Content' ]
+            user_pages = ['Dashboard', 'Profile', 'Tone','Content','DB' ]
             #,'DB'
             # Determine the correct index for the current page selection
             try:
