@@ -1014,6 +1014,7 @@ def main():
     initialize_session_state()
     #st.json(st.session_state)
     # 2. Sidebar/Navigation
+    st.markdown(f"## 🛡️ Authenticated App Demo: {upage}")
     with st.sidebar:
         st.header("App Navigation")
 
