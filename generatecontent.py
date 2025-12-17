@@ -60,10 +60,19 @@ def save_output_to_db(topic, researcher_goal, researcher_backstory,
     new_id = c.lastrowid
     conn.close()
     return new_id
+def convert_to_single_line(posts):
+    res = []
+
+    for post in posts:
+        res.append(post[1])  # Assuming the text is in the second column
+
+    return res
 
 def generate_content_page():
     params = st.query_params
     mode = params.get("mode", None)
+    user = st.session_state['user_info']
+    user_id = user['id']
     record_id = params.get("id", None)
     row = [None] * 10  # Default empty row with 8 elements
     if mode == "edit" and record_id:
@@ -73,6 +82,16 @@ def generate_content_page():
         row = load_record(st.session_state.get('content_id'))
 
     st.title("✍️ Generate AI Blog Content")
+    Tones = common.get_custom_tone(user_id)
+    #st.json(Tones[:, 0])
+    if Tones is not None and len(Tones) > 0:
+        single_t = convert_to_single_line(Tones)
+    else:
+        single_t = None
+
+    #st.json(single_t)
+    #st.json(common.get_all_personalities())
+
 
     st.dataframe({'Tones':common.get_all_personalities()})
     topic = st.text_input("Enter your topic:", value=(row and row[1] if row and row[1] is not None else ""), placeholder="e.g. AI tools for marketing")
@@ -131,7 +150,7 @@ def generate_content_page():
         if topic.strip():
             with st.spinner("🤖 Generating content..."):
                 try:
-                    res = run_pipeline(
+                    res, task_description = run_pipeline(
                         topic=topic,
                         researcher_goal=researcher_goal,
                         researcher_backstory=researcher_backstory,
@@ -141,8 +160,8 @@ def generate_content_page():
                         editor_backstory=editor_backstory,
                     )
                     #st.json(res)
-                    results = res['result']
-
+                    #results = res['result']
+                    results = task_description
                     #st.markdown(results, unsafe_allow_html=True)
                     #json_res = json.loads(res)
 

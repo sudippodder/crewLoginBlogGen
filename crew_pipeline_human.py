@@ -168,7 +168,7 @@ def run_safe_pipeline_with_progress(crew, tasks, topic: str):
     status_text.success("🎉 **Pipeline Complete:** The final humanized article is ready.")
 
     final_result = safe_output_to_json(result_container['result'])
-    return final_result
+    return final_result, task.description
 
 
 # ---------------- Config (tune these) ----------------
@@ -383,7 +383,8 @@ def run_pipeline(topic: str,
 
     crew = Crew(agents=agents, tasks=tasks, verbose=True, process="sequential", tracing=True)
     # 🌟 FIX 7: Pass the topic to the progress function so it can be used in kickoff
-    return run_safe_pipeline_with_progress(crew, tasks, topic=topic)
+    result, task_description = run_safe_pipeline_with_progress(crew, tasks, topic=topic)
+    return result, task_description
 
 # ---------------- Example run helper (Streamlit UI) ----------------
 if __name__ == '__main__':
