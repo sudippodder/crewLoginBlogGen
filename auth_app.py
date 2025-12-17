@@ -115,6 +115,16 @@ def init_db():
             user_id INTEGER DEFAULT 0
         )
     """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS tones(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            details TEXT,
+            user_id INTEGER DEFAULT 0,
+            active INTEGER DEFAULT 1
+        )
+    """)
     # c.execute("""
     #     ALTER TABLE content_history
     #     ADD COLUMN user_id INTEGER DEFAULT 0
@@ -691,30 +701,24 @@ def update_tone_active(tone_id, is_active):
     cursor.execute("UPDATE micro_roles SET is_active = ? WHERE id = ?", (is_active, tone_id))
     conn.commit()
     conn.close()
+
+
 def show_tone_page():
     """Renders the Post creation and viewing page (NEW)."""
     user = st.session_state['user_info']
     user_id = user['id']
     username = user['username']
 
-
-    #st.header(f"View Your Tones ({username})", divider='orange')
-    # st.markdown("""
-    #     <style>
-    #         .right-button {
-    #             display: flex;
-    #             justify-content: flex-end;
-    #         }
-    #     </style>
-    # """, unsafe_allow_html=True)
-    # st.markdown('<div class="right-button">', unsafe_allow_html=True)
-    # clicked = st.button("Create Tone", type="primary")
-    # st.markdown('</div>', unsafe_allow_html=True)
-
-    left, right = st.columns([8, 2])
+    #left, right = st.columns([8, 2])
+    left,middle, right = st.columns([6,2, 2])
     with left:
         st.title("✍️ My Tones")
     #left.header(f"View Your Tones ({username})")  # optional text
+    with middle:
+        if st.button("Tones", type="primary"):
+            #common.navigate_to("addtone")
+            st.session_state['spage'] = 'tonelist'
+            st.rerun()
     with right:
         if st.button("Create Tone", type="primary"):
             #common.navigate_to("addtone")
@@ -781,6 +785,104 @@ def show_tone_page():
                 """, unsafe_allow_html=True)
     else:
         st.info("You haven't published any posts yet. Use the form above to create your first one!")
+
+
+def show_tone_list_page():
+    """Renders the Post creation and viewing page (NEW)."""
+    user = st.session_state['user_info']
+    user_id = user['id']
+    username = user['username']
+
+    #left, right = st.columns([8, 2])
+    left, right = st.columns([8, 2])
+    with left:
+        st.title("✍️ Tones")
+
+    with right:
+        if st.button("Tone List", type="primary"):
+
+            st.session_state['spage'] = ''
+            st.rerun()
+
+    st.markdown("---")
+
+    # --- Post Viewing Section ---
+    #st.subheader("📝 Tone List")
+    st.header("➕ Add New Tone")
+    name = st.text_input("Name")
+    #email = st.text_input("Email")
+    email = ''
+    if st.button("Insert Tone"):
+        if name:
+            common.insert_custom_tone(user_id, name, email)
+            st.success("Tone inserted successfully!")
+        else:
+            st.error("Please fill all fields")
+
+    # Show All Tones
+    st.header("📋 All Tones")
+    Tones = common.get_custom_tone(user_id)
+
+    for row in Tones:
+        tone_id, uname, uemail, active = row
+
+        with st.expander(f"{uname} ({'Active' if active else 'Inactive'})"):
+            new_name = st.text_input("Name", value=uname, key=f"name_{tone_id}")
+            #new_email = st.text_input("Email", value=uemail, key=f"email_{tone_id}")
+
+            col1, col2, col3 = st.columns(3)
+            new_email = ''
+            # Update Button
+            if col1.button("Update", key=f"update_{tone_id}"):
+                common.update_custom_tone(tone_id, new_name, new_email)
+                st.success("Tone updated!")
+
+            # Toggle Active Button
+            if col2.button("Toggle Active", key=f"toggle_{tone_id}"):
+                common.toggle_active_custom_tone(tone_id, active)
+                st.info("Status updated!")
+
+            # Delete Button
+            if col3.button("Delete", key=f"delete_{tone_id}"):
+                common.delete_custom_tone(tone_id)
+                st.error("Tone deleted!")
+
+    st.write("Refresh page to view updated records.")
+
+    # user_tones = get_tones_by_user(user_id)
+    # #st.json(user_tones)
+
+    # if user_tones:
+    #     for tone in user_tones:
+    #         tone_id = tone[0]
+    #         is_active = tone[9] if len(tone) > 9 else 0
+    #         with st.container():
+    #             col1, col2 = st.columns([0.1, 0.9])
+    #             active_checkbox = col1.checkbox(
+    #                 "Active",
+    #                 value=bool(is_active),
+    #                 key=f"active_{tone_id}"
+    #             )
+    #             if active_checkbox != bool(is_active):
+    #                 update_tone_active(tone_id, int(active_checkbox))
+    #                 st.toast(f"Updated: {tone[1]}")  # Small popup notification
+    #                 st.rerun()  # Refresh UI
+
+    #             col2.markdown(f"""
+    #                 <div style="border: 1px solid #ffcc80; padding: 15px; margin-bottom: 15px; border-radius: 8px; background-color: #fff3e0;">
+    #                     <h4 style="margin-top: 0; color: #e65100;">{tone[1]}</h4>
+    #                     <p style="font-size: 0.9em; color: #666; font-style: italic;">
+    #                         Posted by {tone[10]} on {tone[8].split('.')[0]}
+    #                     </p>
+    #                     <p>{show_micro_humanizer_content(tone[7])}</p>
+    #                 </div>
+    #             """, unsafe_allow_html=True)
+    # else:
+    #     st.info("You haven't published any posts yet. Use the form above to create your first one!")
+
+
+
+
 def delete_content(content_id, user_id):
     """Deletes a content entry from the content_history table for a specific user."""
     try:
@@ -904,6 +1006,7 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded"
     )
+    upage = None
     #st.json(st.session_state)
     # 1. Database and State Initialization
     init_db()
@@ -923,7 +1026,10 @@ def main():
 
             # Added 'Posts' to the list of pages
             #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
-            user_pages = ['Dashboard', 'Profile', 'Tone','Content' ]
+            if user['role'] == 'admin':
+                user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'DB']
+            else:
+                user_pages = ['Dashboard', 'Profile', 'Tone','Content']
             #,'DB'
             # Determine the correct index for the current page selection
             try:
@@ -944,14 +1050,7 @@ def main():
 
             # Update page state based on radio button
 
-            #
-            #refresh = query_params.get("refresh", ["false"]).lower()
-            #st.markdown(f"Refresh is {refresh}")
-            # if refresh:
-            #     st.session_state['spage'] = ''
-            #     st.session_state['page'] = 'content'
-            #     st.query_params.clear()
-            #     st.rerun()
+
 
             if upage:
                 st.session_state['page'] = upage
@@ -1019,6 +1118,8 @@ def main():
         elif page == 'tone':
             if 'spage' in st.session_state and st.session_state['spage'] == 'addtone':
                 micro_humanizer_generator.default_view()
+            elif 'spage' in st.session_state and st.session_state['spage'] == 'tonelist':
+                show_tone_list_page()
             else:
                 show_tone_page()     # NEW Page Routing
         elif page == 'db':
