@@ -193,3 +193,41 @@ def set_st_session(ss_vars=None,piroty=None):
         st.session_state['page'] = ss_vars
     elif ss_vars is not None and piroty is not None:
         st.session_state['page'] = piroty
+
+
+
+
+def insert_custom_tone(user_id, name, details):
+    conn = sqlite3.connect(DATABASE_FILE)
+    conn.execute("INSERT INTO tones (user_id, name, details) VALUES (?, ?, ?)", (user_id, name, details))
+    conn.commit()
+    conn.close()
+
+# Fetch All Records
+def get_custom_tone(user_id=None):
+    conn = sqlite3.connect(DATABASE_FILE)
+    users = conn.execute("SELECT id, name, details, active FROM tones where user_id=?", (user_id,)).fetchall()
+    conn.close()
+    return users
+
+# Update Record
+def update_custom_tone(user_id, name, details):
+    conn = sqlite3.connect(DATABASE_FILE)
+    conn.execute("UPDATE tones SET name=?, details=? WHERE id=?", (name, details, user_id))
+    conn.commit()
+    conn.close()
+
+# Toggle Active
+def toggle_active_custom_tone(user_id, current_status):
+    new_status = 0 if current_status == 1 else 1
+    conn = sqlite3.connect(DATABASE_FILE)
+    conn.execute("UPDATE tones SET active=? WHERE id=?", (new_status, user_id))
+    conn.commit()
+    conn.close()
+
+# Delete Record
+def delete_custom_tone(user_id):
+    conn = sqlite3.connect(DATABASE_FILE)
+    conn.execute("DELETE FROM tones WHERE id=?", (user_id,))
+    conn.commit()
+    conn.close()
