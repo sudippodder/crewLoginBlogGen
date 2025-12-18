@@ -7,6 +7,7 @@ import pandas as pd
 import json # Added for session persistence
 import os   # Added for file path management
 import generatecontent
+import temp_app
 importlib.reload(generatecontent)
 import urllib.parse
 from dotenv import load_dotenv
@@ -14,6 +15,7 @@ import micro_humanizer_generator
 import common
 import sqlite
 from streamlit_cookies_manager import EncryptedCookieManager
+import humanize_convert
 ENCRYPTION_PASSWORD = "your_strong_secret_key_here"
 # Key under which the user data will be stored in the cookie
 USER_COOKIE_KEY = "user_session_data"
@@ -116,7 +118,31 @@ def init_db():
         )
     """)
 
-    conn.execute("""
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        template_title TEXT,
+        audience TEXT,
+        tone_style TEXT,
+        content_structure TEXT,
+        notes_for_editors TEXT,
+        expected_length TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS contents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        topic TEXT,
+        template_id INTEGER,
+        generated_content TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    c.execute("""
         CREATE TABLE IF NOT EXISTS tones(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
@@ -232,22 +258,6 @@ def get_tones_by_user(user_id):
     conn.close()
     return  posts
 
-def get_content_by_user(user_id):
-    """Retrieves all tones created by a specific user."""
-    conn = sqlite3.connect(DATABASE_FILE)
-    c = conn.cursor()
-    # Join tones with users to get the username for display
-
-    c.execute("""
-        SELECT p.*
-        FROM content_history p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.user_id = ?
-        ORDER BY p.created_at DESC
-    """, (user_id,))
-    posts = c.fetchall()
-    conn.close()
-    return  posts
 
 def save_session_state(user_info):
     """
@@ -363,7 +373,7 @@ def initialize_session_state():
 
     # 1. Check for persistent login file first
     persistent_info = load_session_state()
-    # st.json( st.session_state)
+
     # 2. Initialize Streamlit session state
     if 'logged_in' not in st.session_state:
         # If Streamlit session is fresh, use persistent info if available
@@ -928,7 +938,7 @@ def list_gen_content():
     # --- Post Viewing Section ---
     st.subheader("📝 Content List")
 
-    user_content = get_content_by_user(user_id)
+    user_content = common.get_content_by_user(user_id)
     #st.json(user_tones)
 
     # selected_tones = common.get_selected_tones_by_user(user_id)
@@ -1001,6 +1011,17 @@ def show_micro_humanizer_content(role_json):
 
 def main():
     """Main function to run the Streamlit app."""
+
+
+
+    # st.json(st.session_state)
+    # st.stop()
+    if 'user_info' not in st.session_state:
+        st.session_state['user_info'] = None
+        st.session_state['logged_in'] = False
+        st.rerun()
+
+
     st.set_page_config(
         page_title="Streamlit Auth Demo",
         layout="wide",
@@ -1014,12 +1035,16 @@ def main():
     initialize_session_state()
     #st.json(st.session_state)
     # 2. Sidebar/Navigation
-    st.markdown(f"## 🛡️ Authenticated App Demo: {upage}")
+
     with st.sidebar:
         st.header("App Navigation")
 
         if st.session_state['logged_in']:
+
+
+
             user = st.session_state['user_info']
+            user_id = user['id']
             st.success(f"Logged in as: {user['username']}")
 
             # --- Navigation buttons ---
@@ -1028,7 +1053,7 @@ def main():
             # Added 'Posts' to the list of pages
             #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
             if user['role'] == 'admin':
-                user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'DB']
+                user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'Humanize','Template','Generate Content','Template Contents','DB']
             else:
                 user_pages = ['Dashboard', 'Profile', 'Tone','Content']
             #,'DB'
@@ -1095,8 +1120,8 @@ def main():
         page = st.session_state['page']
         # if upage not in [None, ""]:
         #     page = upage[0]
-        #st.json(st.session_state)
-        #st.markdown(f"## Navigating to: {page} - {upage}.", unsafe_allow_html=True)
+
+        st.markdown(f"## Navigating to: {page} - {upage}.", unsafe_allow_html=True)
         if page == 'dashboard':
             show_dashboard()
         elif page == 'profile':
@@ -1124,7 +1149,16 @@ def main():
             else:
                 show_tone_page()     # NEW Page Routing
         elif page == 'db':
+
             sqlite.main()     # NEW Page Routing
+        elif page == 'humanize':
+            humanize_convert.show_post_content()
+        elif page == 'template':
+            temp_app.template_page(user_id)
+        elif page == 'generate content':
+            temp_app.generate_content_page(user_id)
+        elif page == 'template contents':
+            temp_app.content_page(user_id)         # NEW Page Routing
         elif page == 'admin':
             show_admin_page()
         else:

@@ -196,6 +196,38 @@ def set_st_session(ss_vars=None,piroty=None):
 
 
 
+def get_content_by_user(user_id):
+    """Retrieves all tones created by a specific user."""
+    conn = sqlite3.connect(DATABASE_FILE)
+    c = conn.cursor()
+    # Join tones with users to get the username for display
+
+    c.execute("""
+        SELECT p.*
+        FROM content_history p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.user_id = ?
+        ORDER BY p.created_at DESC
+    """, (user_id,))
+    posts = c.fetchall()
+    conn.close()
+    return  posts
+
+
+def json_to_html(json_data):
+    if isinstance(json_data, str):
+        try:
+            json_data = json.loads(json_data)
+        except:
+            return "<p style='color:red;'>Invalid JSON Format</p>"
+
+    html = "<table border='1' style='border-collapse: collapse; width: 100%;'>"
+    for key, value in json_data.items():
+        html += f"<tr><th style='padding:6px; background:#f2f2f2;'>{key}</th>"
+        html += f"<td style='padding:6px;'>{value}</td></tr>"
+    html += "</table>"
+    return html
+
 
 def insert_custom_tone(user_id, name, details):
     conn = sqlite3.connect(DATABASE_FILE)
