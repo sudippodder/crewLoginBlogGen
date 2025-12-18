@@ -541,3 +541,142 @@ def default_view():
                 st.error(f"Failed to store in DB: {e}")
                 time.sleep(4)
                 st.rerun()
+
+
+def tone_list_default_view():
+    st.title("Micro Humanizer Role Generator ")
+    col1, col2 = st.columns([2,1])
+    st.session_state['page'] = "micro_humanizer_generator"
+    with col1:
+        st.markdown("### Input")
+        #, "Upload local text file", "Use sample local path"
+        source_type = st.selectbox("Input type", ["URL", "Paste content"])
+        url = ""
+        uploaded_text = ""
+        local_path = ""
+        if source_type == "URL":
+            url = st.text_input("Blog URL", "")
+        elif source_type == "Paste content":
+            uploaded_text = st.text_area("Paste blog text (or part of it)", height=300)
+        elif source_type == "Upload local text file":
+            uploaded_file = st.file_uploader("Choose a local .txt/.md file", type=["txt","md","markdown"])
+            if uploaded_file:
+                try:
+                    uploaded_text = uploaded_file.read().decode("utf-8")
+                except Exception:
+                    uploaded_text = uploaded_file.getvalue().decode("utf-8","ignore")
+        else:
+            local_path = st.text_input("Local path (sample provided)", SAMPLE_LOCAL_PATH)
+
+        st.markdown("---")
+        st.text_input("Topic hint (optional)", key="topic_hint")
+        coll1, coll2 = st.columns(2)
+        #st.text_input("Optional: OpenAI model to use (env override)", value=os.getenv("OPENAI_MODEL","gpt-4o-mini"), key="model_override")
+        with coll1:
+            generate_btn = st.button("Generate Micro Humanizer Role")
+        with coll2:
+            if st.button("Back"):
+                #common.navigate_to("clear")
+                st.session_state['page'] = "tone"
+                st.session_state['spage'] = ""
+                st.rerun()
+
+    with col2:
+        st.markdown("### Settings & Info")
+        st.markdown("- Uses `newspaper3k` + `BeautifulSoup` to extract text from URLs.")
+        st.markdown("- Uses spaCy + TextBlob + textstat to compute features.")
+        st.markdown("- Uses OpenAI ChatCompletion (if OPENAI_API_KEY is set) or fallback template.")
+        # st.markdown("### Example local path (from upload):")
+        # st.code(SAMPLE_LOCAL_PATH)
+
+    # Generation flow ----
+    role_json = st.session_state.get('role_json')
+    if generate_btn or role_json:
+        st.markdown("### Running analysis...")
+        raw_text = ""
+        try:
+            if source_type == "URL":
+                if not url:
+                    st.error("Please enter a URL.")
+                    st.stop()
+                raw_text = fetch_article_text(url)
+            elif source_type == "Paste content":
+                if not uploaded_text or len(uploaded_text.strip()) < 30:
+                    st.error("Please paste at least some text.")
+                    st.stop()
+                raw_text = uploaded_text
+            elif source_type == "Upload local text file":
+                if uploaded_file is None:
+                    st.error("Please upload a local .txt or .md file.")
+                    st.stop()
+                raw_text = uploaded_text
+            else:
+                if not local_path:
+                    st.error("Please provide a local path.")
+                    st.stop()
+                try:
+                    raw_text = load_local_text_file(local_path)
+                    if not raw_text:
+                        st.warning("Local path is not a text file or file is empty. If it's an image/PDF the app will show preview only.")
+                except FileNotFoundError as e:
+                    st.error(str(e))
+                    st.stop()
+        except Exception as e:
+            st.error(f"Failed to load content: {e}")
+            st.stop()
+
+        # st.markdown("#### Extracted Preview (first 1000 chars)")
+        # st.code((raw_text[:1000] + "...") if len(raw_text) > 1000 else raw_text)
+
+        # Analyze
+        with st.spinner("Analyzing text features..."):
+            stats = analyze_text_features(raw_text)
+        #st.success("Analysis complete")
+        #st.json(stats)
+
+        # Ask LLM to generate micro-humanizer role JSON
+        with st.spinner("Generating Micro Humanizer Role via LLM / fallback..."):
+            topic_hint = st.session_state.get("topic_hint") or None
+            os.environ["OPENAI_MODEL"] = st.session_state.get("model_override") or os.getenv("OPENAI_MODEL","gpt-4o-mini")
+            if not role_json:
+                role_json = generate_role_with_llm(raw_text, stats, topic_hint)
+                st.session_state['role_json'] = role_json
+        # st.markdown("### Generated Micro Humanizer Role (JSON)")
+        # st.json(role_json)
+
+        # Save JSON to file
+        safe_topic = (topic_hint or "topic").replace(" ", "_")[:40]
+        ts = int(time.time())
+        out_path = f"micro_humanizer_{safe_topic}_{ts}.json"
+        # try:
+        #     with open(out_path, "w", encoding="utf-8") as f:
+        #         json.dump(role_json, f, indent=2)
+        #     st.success(f"Saved role JSON to `{out_path}`")
+        # except Exception as e:
+        #     st.warning(f"Could not save JSON to disk: {e}")
+
+        # Provide suggested micro-agent definitions in YAML-ish format for quick copy
+        st.markdown("### Suggested micro-agent list (quick starter)")
+        suggested_agents = role_json.get("micro_agent_list") if isinstance(role_json, dict) else None
+        if not suggested_agents:
+            suggested_agents = ["ToneMatcher","SentenceVariabilityAdjuster","FlowEnhancer","HumanErrorInjector"]
+        for a in suggested_agents:
+            st.write(f"- **{a}** — role: {a}; goal: implement the micro-behavior described in role JSON; backstory: derived from blog fingerprint.")
+
+        st.markdown("---")
+        st.markdown("Done. Use this output to instantiate your micro-agents dynamically in your CrewAI pipeline.")
+        # save_btn = st.button("Save")
+        if st.button("Save To SQLite DB"):
+            #st.markdown(f"""### Saving to local SQLite DB...{source_type} role_json > {raw_text}""")
+            #st.stop()
+            if source_type == "URL":
+                source_type = 'URL : ' + url
+            try:
+                common.save_to_db(source_type, raw_text, role_json)
+                st.success("✅ Stored Successfully!")
+                time.sleep(4)
+                st.rerun()
+            except Exception as e:
+                st.error(f"Failed to store in DB: {e}")
+                time.sleep(4)
+                st.rerun()

@@ -226,35 +226,45 @@ def generate_content_page(user_id):
 
     template_select = st.selectbox("Choose Template", templates, format_func=lambda x: x[1])
 
-    if st.button("Generate"):
-        template_id = template_select[0]
+    #st.session_state['bit'] = 0
+    if 'bit' not in st.session_state:
+        st.session_state['bit'] = 0
+    bit = st.session_state['bit']
+    #st.markdown(f"---{bit}---")
+    if st.button("Generate") or bit == 2:
+        with st.spinner("⏳ Generating content..."):
+            template_id = template_select[0]
 
-        cursor.execute("SELECT * FROM templates WHERE id=?", (template_id,))
-        t = cursor.fetchone()
+            cursor.execute("SELECT * FROM templates WHERE id=?", (template_id,))
+            t = cursor.fetchone()
 
-        template_json = {
-            "template_title": t[2],
-            "audience": t[3].split("|"),
-            "tone_style": t[4].split("|"),
-            "content_structure": t[5].split("|"),
-            "notes_for_editors": t[6].split("|"),
-            "expected_length": t[7].split("|"),
-        }
+            template_json = {
+                "template_title": t[2],
+                "audience": t[3].split("|"),
+                "tone_style": t[4].split("|"),
+                "content_structure": t[5].split("|"),
+                "notes_for_editors": t[6].split("|"),
+                "expected_length": t[7].split("|"),
+            }
 
-        st.subheader("Template (JSON View)")
-        st.markdown(json_to_html(template_json), unsafe_allow_html=True)
+            st.subheader("Template (JSON View)")
+            st.markdown(json_to_html(template_json), unsafe_allow_html=True)
 
-        generated = generate_content(topic, template_json)
-        st.subheader("Generated Content")
-        st.markdown(generated)
+            generated = generate_content(topic, template_json)
+            st.subheader("Generated Content")
+            st.markdown(generated)
 
-        if generated and st.button("Save Content"):
-            cursor.execute("""
-                INSERT INTO contents (user_id, topic, template_id, generated_content)
-                VALUES (?, ?, ?, ?)
-            """, (user_id, topic, template_id, generated))
-            conn.commit()
-            st.success("Content saved!")
+            st.session_state['bit'] = 2
+            if generated and st.button("Save Content"):
+
+                st.session_state['bit'] = 1
+                cursor.execute("""
+                    INSERT INTO contents (user_id, topic, template_id, generated_content)
+                    VALUES (?, ?, ?, ?)
+                """, (user_id, topic, template_id, generated))
+                conn.commit()
+                st.success("Content saved!")
+                st.rerun()
 
 # ----------------------------
 # MAIN APP
