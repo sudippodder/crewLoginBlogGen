@@ -14,8 +14,13 @@ from dotenv import load_dotenv
 import micro_humanizer_generator
 import common
 import sqlite
-from streamlit_cookies_manager import EncryptedCookieManager
+#from streamlit_cookies_manager import EncryptedCookieManager
+from streamlit_cookies_manager import CookieManager
 import humanize_convert
+import template_type
+import template_list
+import template_casestudy_form
+import template_generate
 ENCRYPTION_PASSWORD = "your_strong_secret_key_here"
 # Key under which the user data will be stored in the cookie
 USER_COOKIE_KEY = "user_session_data"
@@ -23,13 +28,19 @@ USER_COOKIE_KEY = "user_session_data"
 COOKIE_EXPIRY_DAYS = 30
 #st.markdown(f"{st.session_state}")
 
-cookies = EncryptedCookieManager(prefix="myapp", password="adminapp123")
+#cookies = EncryptedCookieManager(prefix="myapp", password="adminapp123")
+cookies = CookieManager()
+
 if not cookies.ready():
     st.info("Loading cookies...")
     st.stop()
 
 # --- Configuration ---
 load_dotenv()
+# AUTO-LOGIN using cookie
+# if cookies.get("auth_user"):
+#     st.session_state.logged_in = True
+#     st.session_state.username = cookies.get("auth_user")
 
 DATABASE_FILE = os.getenv("DATABASE_FILE")
 SESSION_FILE = os.getenv("SESSION_FILE") # File to store persistent login data
@@ -37,14 +48,7 @@ DEFAULT_USER_ROLE = os.getenv("DEFAULT_USER_ROLE")
 # The user with this username will be considered the admin (default password 'adminpass')
 ADMIN_USER = os.getenv("ADMIN_USER")
 
-for k, v in {
-    "reg_user": "",
-    "reg_pass": "",
-    "reg_name": "",
-    "reg_email": "",
-    "reg_message": ""
-}.items():
-    st.session_state.setdefault(k, v)
+
 
 query_params = st.query_params
 
@@ -151,9 +155,28 @@ def init_db():
             active INTEGER DEFAULT 1
         )
     """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS template_type(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE
+        );
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS templates_form (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            template_type INTEGER,
+            template_title TEXT,
+            use_case TEXT,
+            version TEXT,
+            user_id INTEGER DEFAULT 0,
+            data_json TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     # c.execute("""
-    #     ALTER TABLE content_history
-    #     ADD COLUMN user_id INTEGER DEFAULT 0
+    #     ALTER TABLE templates_form
+    #     ADD COLUMN updated_at DATETIME;
     # """)
     conn.commit()
     conn.close()
@@ -318,7 +341,8 @@ def save_session_state(user_info):
 def load_session_state():
     """Loads user information from the cookie."""
     try:
-        user_info_json = cookies.get(USER_COOKIE_KEY)
+        #user_info_json = cookies.get(USER_COOKIE_KEY)
+        user_info_json = cookies.get("auth_user")
 
         # Check if cookie exists and is not empty
         if user_info_json and user_info_json.strip():
@@ -336,13 +360,13 @@ def load_session_state():
 
 def clear_session_state():
     """Clears the persistent session file."""
-    try:
-        # Check if cookie exists and delete it
-        if USER_COOKIE_KEY in cookies:
-            del cookies[USER_COOKIE_KEY]
-            cookies.save()
-    except Exception as e:
-        st.error(f"Error clearing session state from cookie: {e}")
+    # try:
+    #     # Check if cookie exists and delete it
+    #     if USER_COOKIE_KEY in cookies:
+    #         del cookies[USER_COOKIE_KEY]
+    #         cookies.save()
+    # except Exception as e:
+    #     st.error(f"Error clearing session state from cookie: {e}")
 
     # Clear all session state keys
     keys_to_delete = list(st.session_state.keys())
@@ -372,9 +396,17 @@ def initialize_session_state():
     """Initializes necessary session state variables and checks for default admin and persistent session."""
 
     # 1. Check for persistent login file first
-    persistent_info = load_session_state()
-
+    #persistent_info = load_session_state()
+    #ca = cookies.get("auth_user")
+    user_info_json = cookies.get("auth_user")
+    persistent_info = {}
+    if user_info_json:
+        try:
+            persistent_info = json.loads(user_info_json)
+        except json.JSONDecodeError:
+            persistent_info = {}
     # 2. Initialize Streamlit session state
+
     if 'logged_in' not in st.session_state:
         # If Streamlit session is fresh, use persistent info if available
         st.session_state['logged_in'] = bool(persistent_info)
@@ -392,17 +424,26 @@ def initialize_session_state():
 
 # --- Authentication Logic ---
 
-def login_user(username, password):
+def login_user(username, password, remember=False):
     """Handles the login process."""
     user_info = verify_credentials(username, password)
+    # st.json(user_info)
+    # st.markdown(f"{user_info['id']}")
+    # st.stop()
     if user_info:
         st.session_state['logged_in'] = True
         st.session_state['user_info'] = user_info
         st.session_state['page'] = 'dashboard'
 
         # Save state to file for persistence across browser refreshes
-        save_session_state(user_info)
+        #save_session_state(user_info)
+        # set cookie
 
+        if remember:
+            st.session_state["remember_login"] = True
+
+        cookies["auth_user"] = json.dumps(user_info)       # optional
+        cookies.save()
         st.success(f"Login successful! Welcome, {user_info['username']}.")
         time.sleep(1) # Wait slightly before rerun for message visibility
         st.rerun()
@@ -412,9 +453,8 @@ def login_user(username, password):
 def logout_user():
     """Handles the logout process."""
     # Clear the persistent session cookie
-    if USER_COOKIE_KEY in cookies:
-        cookies[USER_COOKIE_KEY] = ""
-        cookies.save()
+    cookies["auth_user"] = ""
+    cookies.save()
     # Clear all session state
     keys_to_delete = list(st.session_state.keys())
     for key in keys_to_delete:
@@ -422,6 +462,7 @@ def logout_user():
     # Set logged out state
     st.session_state['logged_in'] = False
     st.session_state['user_info'] = None
+    st.session_state["remember_login"] = False
     st.session_state['page'] = 'login'
     st.toast("Logged out successfully!", icon="👋")
     time.sleep(0.5)  # Brief delay to show toast
@@ -430,6 +471,9 @@ def logout_user():
 # --- Page Rendering Functions ---
 
 def show_login_page():
+    if st.session_state.get("remember_login") and st.session_state.get("username"):
+        st.session_state["logged_in"] = True
+        st.rerun()
     """Renders the Login and Registration forms."""
     st.title("🔐 Secure Login Portal")
     st.markdown("---")
@@ -441,10 +485,11 @@ def show_login_page():
         with st.form("login_form"):
             login_username = st.text_input("Username", key="login_user")
             login_password = st.text_input("Password", type="password", key="login_pass")
+            remember_me = st.checkbox("Remember Me", key="remember_me")
             login_button = st.form_submit_button("Log In", type="primary")
 
             if login_button:
-                login_user(login_username, login_password)
+                login_user(login_username, login_password, remember_me)
 
     with col2:
         st.subheader("New User Registration")
@@ -1016,10 +1061,10 @@ def main():
 
     # st.json(st.session_state)
     # st.stop()
-    if 'user_info' not in st.session_state:
-        st.session_state['user_info'] = None
-        st.session_state['logged_in'] = False
-        st.rerun()
+    # if 'user_info' not in st.session_state:
+    #     st.session_state['user_info'] = None
+    #     st.session_state['logged_in'] = False
+    #     st.rerun()
 
 
     st.set_page_config(
@@ -1035,17 +1080,26 @@ def main():
     initialize_session_state()
     #st.json(st.session_state)
     # 2. Sidebar/Navigation
-
+    #st.json(st.session_state)
+    # ca = cookies.get("auth_user")
+    # st.markdown(f"{ca} -- ")
+    #st.json(st.session_state)
     with st.sidebar:
         st.header("App Navigation")
-
-        if st.session_state['logged_in']:
-
-
-
+        #st.json(st.session_state)
+        if "logged_in" in st.session_state and st.session_state["logged_in"] == True:
+            if "params" not in st.session_state:
+                st.session_state.params = {}
             user = st.session_state['user_info']
             user_id = user['id']
             st.success(f"Logged in as: {user['username']}")
+
+            params = st.session_state['params'] if 'params' in st.session_state else {}
+            #paramcat = params.get("template_id", "")
+            subpage = params.get("subpage", "") if "subpage" in params else ""
+            template_id = params.get("template_id", "") if "template_id" in params else ""
+            #st.markdown(f"Use your {st.session_state.get('page', 'Dashboard')}")
+            #st.json(params)
 
             # --- Navigation buttons ---
             st.markdown("### User Pages")
@@ -1053,16 +1107,33 @@ def main():
             # Added 'Posts' to the list of pages
             #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
             if user['role'] == 'admin':
-                user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'Humanize','Template','Generate Content','Template Contents','DB']
+                #user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'Humanize','Template','Generate Content','Template Contents','DB','Template Type','Content Generator','Content List']
+                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List']
             else:
-                user_pages = ['Dashboard', 'Profile', 'Tone','Content']
+                #user_pages = ['Dashboard', 'Profile', 'Tone','Content','Content Generator','Content List']
+                user_pages = ['Dashboard', 'Profile', 'Content Generator','Content List']
             #,'DB'
-            # Determine the correct index for the current page selection
+            # Determine the correct index for the current page
+            # template_id = st.query_params.get("template_id", "")
+            # if template_id not in [None, ""]:
+            #     template_id = st.session_state['template_id'] if 'template_id' in st.session_state else template_id
+            current_page_param = st.query_params.get("current_page", "")
+
+            #subpage = st.session_state['subpage'] if 'subpage' in st.session_state else None
+
+            #st.markdown(f"{current_page_param}")
+            if current_page_param == "template_type":
+                current_page =  "Template Type"
+                st.query_params.clear()
+            else:
+                current_page = st.session_state.get("page", "Dashboard")
+            #st.markdown(f"### Navigate to: {current_page}")
             try:
-                current_index = user_pages.index(st.session_state['page'].capitalize())
+                current_index = user_pages.index(current_page)
             except ValueError:
                 current_index = 0 # Default to Dashboard if page is unknown
-            upage = st.query_params.get("page", None)
+
+            #st.markdown(f"### Navigate to: {current_index}")
             if 'refresh' in query_params and query_params['refresh'].lower() == 'true':
                 current_index = 3
             # Use radio buttons for clear, responsive navigation selection
@@ -1077,7 +1148,7 @@ def main():
             # Update page state based on radio button
 
 
-
+            upage = st.query_params.get("page", None)
             if upage:
                 st.session_state['page'] = upage
                 if 'refresh' in query_params and query_params['refresh'].lower() == 'true' and 'id' in query_params:
@@ -1109,19 +1180,13 @@ def main():
 
 
     # 3. Content Routing
-    if st.session_state['logged_in']:
+
+    #st.markdown(f"{cookies["auth_user"]}")
+    if "logged_in" in st.session_state and st.session_state["logged_in"] == True:
         # Show the appropriate page based on the session state
-        #upage = st.query_params.get("page", "dashboard")
-
-        # if upage not in [None, ""]:
-        #     common.navigate_to("clear")
-        #     st.session_state['page'] = upage
-            #st.rerun()
         page = st.session_state['page']
-        # if upage not in [None, ""]:
-        #     page = upage[0]
 
-        st.markdown(f"## Navigating to: {page} - {upage}.", unsafe_allow_html=True)
+        #st.markdown(f"## Navigating to: {page} - {template_id}.", unsafe_allow_html=True)
         if page == 'dashboard':
             show_dashboard()
         elif page == 'profile':
@@ -1157,8 +1222,26 @@ def main():
             temp_app.template_page(user_id)
         elif page == 'generate content':
             temp_app.generate_content_page(user_id)
+
+        elif page == 'template type':
+            if subpage == "template_list":
+                template_list.main()
+            elif subpage == "template_form":
+                template_form.main()
+            elif subpage == "casestudy_form":
+                template_casestudy_form.main()
+            else:
+                template_type.main()
+        elif page == 'content generator':
+            #template_generate.generate_content_page(user_id)
+            template_generate.generate_casestudy_content_page(user_id=user_id)
+        elif page == 'admin content generator':
+            #template_generate.generate_content_page(user_id)
+            template_generate.admin_generate_casestudy_content_page(user_id=user_id)
         elif page == 'template contents':
-            temp_app.content_page(user_id)         # NEW Page Routing
+            temp_app.content_page(user_id)
+        elif page == 'content list':
+            temp_app.content_list(user_id)         # NEW Page Routing
         elif page == 'admin':
             show_admin_page()
         else:
@@ -1170,8 +1253,8 @@ def main():
         show_login_page()
 
     #st.markdown(f"---{upage}")
-    if upage:
-        st.query_params.clear()
+    # if upage:
+    #     st.query_params.clear()
 
 
 

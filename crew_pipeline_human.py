@@ -191,6 +191,7 @@ if "user_info" not in st.session_state:
     ]
 else:
     user = st.session_state.get("user_info")
+    #st.json(user)
     try:
         user_id = user['id']
     except TypeError:
@@ -397,4 +398,4 @@ if __name__ == '__main__':
             writer_goal='Write a first messy draft about the topic.',
             editor_goal='Lightly edit for clarity but preserve mess.'
         )
-        st.json(out)
+        #st.json(out)

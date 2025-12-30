@@ -188,6 +188,13 @@ def get_all_personalities(user_id=None):
     return result
 
 
+def go_to(page, **params):
+    qs = st.query_params
+    for k, v in params.items():
+        qs[k] = v
+
+    st.switch_page(page)
+
 def set_st_session(ss_vars=None,piroty=None):
     if ss_vars is not None and piroty is None:
         st.session_state['page'] = ss_vars
@@ -263,3 +270,7 @@ def delete_custom_tone(user_id):
     conn.execute("DELETE FROM tones WHERE id=?", (user_id,))
     conn.commit()
     conn.close()
+
+
+def get_conn():
+    return sqlite3.connect(DATABASE_FILE, check_same_thread=False)

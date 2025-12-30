@@ -70,7 +70,7 @@ def run_safe_pipeline_with_progress(crew, tasks):
     # 1. DEFINE PERMANENT UI ELEMENTS
     st.markdown("## 📋 Pipeline Execution Log")
     detailed_log_container = st.container()
-    #st.json(PERSONALITIES)
+
     # Define the placeholder once inside the permanent container
     with detailed_log_container:
         st.markdown("### Task Details") # Keep the heading static
