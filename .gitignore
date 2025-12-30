@@ -17,3 +17,7 @@ Thumbs.db
 .vscode/
 .idea/
 ".env"
+
+*.db
+*.sqlite
+*.sqlite3
