@@ -823,7 +823,7 @@ def generate_content_page(user_id):
     cursor = conn.cursor()
     st.header("Generate Content")
 
-    topic = st.text_input("Enter Topic")
+    topic = st.text_area("Enter Topic")
 
     cursor.execute("SELECT id, template_title FROM templates_form WHERE user_id=?", (user_id,))
     templates = cursor.fetchall()
@@ -911,7 +911,7 @@ def generate_casestudy_content_page(user_id):
     cursor = conn.cursor()
     st.header("Generate Content")
     #st.markdown(f"Use your {st.session_state.get('page', 'Dashboard')}")
-    topic = st.text_input("Enter Topic")
+    topic = st.text_area("Enter Topic")
 
     #cursor.execute("SELECT id, template_title FROM templates_form WHERE user_id=?", (user_id,))
     cursor.execute("SELECT id, template_title FROM templates_form")
@@ -1020,7 +1020,7 @@ def admin_generate_casestudy_content_page(user_id):
     cursor = conn.cursor()
     st.header("Generate Content")
     #st.markdown(f"Use your {st.session_state.get('page', 'Dashboard')}")
-    topic = st.text_input("Enter Topic")
+    topic = st.text_area("Enter Topic")
 
     cursor.execute("SELECT id, template_title FROM templates_form WHERE user_id=?", (user_id,))
     templates = cursor.fetchall()
@@ -1091,14 +1091,16 @@ def admin_generate_casestudy_content_page(user_id):
             # st.markdown(generated)
 
             st.session_state['bit'] = 2
-    if "temp_generated" in st.session_state:
+    #st.markdown(f"### Generated Content Preview-- {st.session_state['temp_generated']}")
+    #st.json(st.session_state['temp_generated'])
+    if "temp_generated" in st.session_state and st.session_state['temp_generated'] not in [None, ""]:
         st.markdown("### Generated Content Preview")
         topic = st.session_state.get("temp_topic", "")
         st.markdown(f"**Topic:** {topic}")
         for section, content in st.session_state['temp_generated'].items():
             with st.expander(section.title(), expanded=True):
                 st.write(content)
-    if "temp_generated" in st.session_state and st.button("Save Content"):
+    if "temp_generated" in st.session_state and st.session_state['temp_generated'] not in [None, ""] and st.button("Save Content"):
     #if st.button("Save Content"):
         #topic = st.session_state["temp_topic"]
         topic = st.session_state.get("temp_topic", "None")

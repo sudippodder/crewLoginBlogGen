@@ -81,15 +81,19 @@ def main():
             with st.expander(section_name.upper(), expanded=False):
 
                 st.subheader("🎯 Goal")
+                goaltitle = section_name + ' goal'
+                goaltitle = goaltitle.title()
                 goal = st.text_area(
-                    f"{section_name}_goal",
+                    f"{goaltitle}",
                     value=cfg.get("goal", ""),
                     height=80
                 )
 
                 st.subheader("📐 Structure")
+                structuretitle = section_name + ' structure'
+                structuretitle = structuretitle.title()
                 structure = st.text_area(
-                    f"{section_name}_structure",
+                    f"{structuretitle}",
                     value="\n".join(cfg.get("structure", [])),
                     height=100,
                     help="One item per line"
@@ -99,15 +103,19 @@ def main():
                 writing_rules = {}
                 for rule_key, rule_val in cfg.get("writing_rules", {}).items():
                     if isinstance(rule_val, list):
+                        structurewriterule = section_name + ' write' + rule_key
+                        structurewriterule = structurewriterule.title()
                         writing_rules[rule_key] = st.text_area(
-                            f"{section_name}_wr_{rule_key}",
+                            f"{structurewriterule}",
                             value="\n".join(rule_val),
                             height=80,
                             help="One item per line"
                         ).splitlines()
                     else:
+                        structurewriterule = section_name + ' write' + rule_key
+                        structurewriterule = structurewriterule.title()
                         writing_rules[rule_key] = st.text_input(
-                            f"{section_name}_wr_{rule_key}",
+                            f"{structurewriterule}",
                             value=str(rule_val)
                         )
 
@@ -115,40 +123,59 @@ def main():
                 agents = {}
                 for agent_type, agent_cfg in cfg.get("agents", {}).items():
                     st.markdown(f"**{agent_type.title()} Agent**")
+                    structureagentrole = section_name + ' '+ agent_type + ' role'
+                    structureagentrole = structureagentrole.title()
+
+                    structureagentgoal = section_name + ' '+ agent_type + ' Goal'
+                    structureagentgoal = structureagentgoal.title()
+
+                    structureagentbackstory = section_name + ' '+ agent_type + ' Backstory'
+                    structureagentbackstory = structureagentbackstory.title()
+
+                    structureagentfocus = section_name + ' '+ agent_type + ' Focus'
+                    structureagentfocus = structureagentfocus.title()
+
+                    structureagentinstruction = section_name + ' '+ agent_type + ' Instruction'
+                    structureagentinstruction = structureagentinstruction.title()
+
                     agents[agent_type] = {
                         "role": st.text_input(
-                            f"{section_name}_{agent_type}_role",
+                            f"{structureagentrole}",
                             value=agent_cfg.get("role", "")
                         ),
                         "goal": st.text_area(
-                            f"{section_name}_{agent_type}_goal",
+                            f"{structureagentgoal}",
                             value=agent_cfg.get("goal", ""),
                             height=60
                         ),
                         "backstory": st.text_area(
-                            f"{section_name}_{agent_type}_backstory",
+                            f"{structureagentbackstory}",
                             value=agent_cfg.get("backstory", ""),
                             height=80
                         ),
                         "focus": st.text_area(
-                            f"{section_name}_{agent_type}_focus",
+                            f"{structureagentfocus}",
                             value=agent_cfg.get("focus", ""),
                             height=80
                         ),
                         "instruction": st.text_area(
-                            f"{section_name}_{agent_type}_instruction",
+                            f"{structureagentinstruction}",
                             value=agent_cfg.get("instruction", ""),
                             height=80
                         )
                     }
 
                 st.subheader("🎨 Tone & Limits")
+                sectionnametone = section_name + ' tone'
+                sectionnametone = sectionnametone.title()
                 tone = st.text_input(
-                    f"{section_name}_tone",
+                    f"{sectionnametone}",
                     value=cfg.get("tone", "")
                 )
+                sectionnamewordlimit = section_name + ' word limit'
+                sectionnamewordlimit = sectionnamewordlimit.title()
                 word_limit = st.number_input(
-                    f"{section_name}_word_limit",
+                    f"{sectionnamewordlimit}",
                     value=int(cfg.get("word_limit", 0)),
                     step=10
                 )
