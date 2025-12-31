@@ -278,7 +278,7 @@ def content_list(user_id):
 
             col1, col2 = st.columns(2)
             with col1:
-                if st.button(f"View"):
+                if st.button("View", key=f"view_{id}"):
                     if generated_content:
                         # clean_template = sanitize_for_json(generated_content)
                         # json_string = json.dumps(clean_template, ensure_ascii=False)
