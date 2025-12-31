@@ -296,7 +296,7 @@ def content_list(user_id):
                     else:
                         st.info("No generated content available.")
             with col2:
-                if st.button(f"Delete"):
+                if st.button("Delete", key=f"delete_{id}"):
                     cursor.execute("DELETE FROM contents WHERE id=?", (id,))
                     conn.commit()
                     st.warning("Deleted successfully")
