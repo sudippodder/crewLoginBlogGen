@@ -66,7 +66,6 @@ def main():
             "Template Title",
             existing.get("template_title", row[1] if template_id else "")
         )
-
         # use_case = st.text_input(
         #     "Use Case (, separated)",
         #     existing.get("use_case", "")
@@ -230,6 +229,12 @@ def main():
         #st.json(edited_template)
 
     if submitted:
+        if not template_title:
+            st.warning("Please enter a template title.")
+            st.stop()
+        if not version:
+            st.warning("Please enter a version.")
+            st.stop()
         # output = {
         #     "template_title": template_title,
         #     "use_case": use_case,

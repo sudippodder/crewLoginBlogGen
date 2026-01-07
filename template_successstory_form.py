@@ -76,6 +76,7 @@ def main():
             "Version",
             existing.get("version", row[2] if template_id else "v1.0")
         )
+
         #st.json(template)
         for section_name, cfg in template.items():
             with st.expander(section_name.upper(), expanded=False):
@@ -232,6 +233,12 @@ def main():
         #st.json(edited_template)
 
     if submitted:
+        if not template_title:
+            st.warning("Please enter a template title.")
+            st.stop()
+        if not version:
+            st.warning("Please enter a version.")
+            st.stop()
         # output = {
         #     "template_title": template_title,
         #     "use_case": use_case,
