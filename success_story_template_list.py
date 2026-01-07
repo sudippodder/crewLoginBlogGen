@@ -79,8 +79,8 @@ def main():
         h1, h2, h3, h4, h5 = st.columns([3, 4, 2, 1, 1])
 
         h1.markdown("**Title**")
-        h2.markdown("**Use Case**")
-        h3.markdown("**Version**")
+        h2.markdown("**Version**")
+        h3.markdown("**Clone**")
         h4.markdown("**Edit**")
         h5.markdown("**Delete**")
         for tid, title, use_case, version in rows:

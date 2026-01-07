@@ -67,10 +67,7 @@ def main():
             existing.get("template_title", row[1] if template_id else "")
         )
 
-        # use_case = st.text_input(
-        #     "Use Case (, separated)",
-        #     existing.get("use_case", "")
-        # )
+
 
         version = st.text_input(
             "Version",
