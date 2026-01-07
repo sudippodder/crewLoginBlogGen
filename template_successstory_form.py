@@ -22,8 +22,8 @@ def get_section(data, idx):
 
 @st.cache_data
 def load_template():
-    #st.markdown("Loading blog template...--blog_template_structure")
-    with open("blog_template_structure.json", "r", encoding="utf-8") as f:
+    #st.markdown("Loading success story template...--success_story_template_structure")
+    with open("success_story_template_structure.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -48,11 +48,11 @@ def main():
         ).fetchone()
         if row:
             existing = json.loads(row[3])
-    st.title("🧩 Case Study Form")
+    st.title("🧩 Success Story Form")
     if st.button("⬅ Back to List"):
         st.session_state["params"]["current_page"] = "template_type"
         st.session_state["params"]["page"] = "template type"
-        st.session_state["params"]["subpage"] = "template_list"
+        st.session_state["params"]["subpage"] = "successstory_template_list"
         st.rerun()
     with st.form("template_form"):
         #st.markdown(f"### Edit Case Study Template -- {template_id} -- {existing}")
@@ -95,7 +95,7 @@ def main():
                 structure = st.text_area(
                     f"{structuretitle}",
                     value="\n".join(cfg.get("structure", [])),
-                    height=100,
+                    height=300,
                     help="One item per line"
                 ).splitlines()
 
@@ -103,21 +103,23 @@ def main():
                 writing_rules = {}
                 for rule_key, rule_val in cfg.get("writing_rules", {}).items():
                     if isinstance(rule_val, list):
-                        structurewriterule = section_name + ' write' + rule_key
+                        structurewriterule = section_name + ' write ' + rule_key
                         structurewriterule = structurewriterule.title()
                         writing_rules[rule_key] = st.text_area(
                             f"{structurewriterule}",
                             value="\n".join(rule_val),
-                            height=80,
+                            height=300,
                             help="One item per line"
                         ).splitlines()
                     else:
-                        structurewriterule = section_name + ' write' + rule_key
+                        structurewriterule = section_name + ' write ' + rule_key
                         structurewriterule = structurewriterule.title()
-                        writing_rules[rule_key] = st.text_input(
+                        writing_rules[rule_key] = st.text_area(
                             f"{structurewriterule}",
-                            value=str(rule_val)
-                        )
+                            value="\n".join(rule_val),
+                            height=300,
+                            help="One item per line"
+                        ).splitlines()
 
                 st.subheader("👥 Agents (CrewAI Compatible)")
                 agents = {}
@@ -283,6 +285,6 @@ def main():
         #st.session_state.page = "list"
         st.session_state["params"]["current_page"] = "template_type"
         st.session_state["params"]["page"] = "template type"
-        st.session_state["params"]["subpage"] = "template_list"
+        st.session_state["params"]["subpage"] = "successstory_template_list"
         time.sleep(2)
         st.rerun()

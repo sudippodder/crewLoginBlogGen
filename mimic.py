@@ -13,7 +13,6 @@ if __name__ == '__main__':
                 # 🚨 Placeholder for actual web fetching/browsing tool call
                 # In a real app, you would use a tool/library here.
                 # Example (concept only):
-                # target_blog_content = get_full_text_from_url(mimic_url)
                 # For demonstration, we use a placeholder or assume a tool call:
                 target_blog_content = "This is a placeholder for the full text fetched from the URL."
 

@@ -191,7 +191,6 @@ if "user_info" not in st.session_state:
     ]
 else:
     user = st.session_state.get("user_info")
-    #st.json(user)
     try:
         user_id = user['id']
     except TypeError:
@@ -342,42 +341,14 @@ def run_pipeline(topic: str,
 
         # Task 1 (Writer): Needs topic and research notes ({{draft_content}}). Output is the raw draft.
         Task(description=f"Write messy raw draft for '{{topic}}' using the following research notes: {{draft_content}}.", expected_output='raw-draft', agent=writer),
-
-        # Task 2 (Editor): Needs draft ({{draft_content}}).
-        #Task(description='Light edit (keep voice) of the following draft: {{draft_content}}.', expected_output='light-edited', agent=editor),
     ]
 
     # micro rewrite tasks
     tasks.extend(micro_tasks)
-
-    # local micro refinement passes (light)
-    # refinement_tasks = []
-    # for idx, m in enumerate(micro_agents, start=1):
-    #     for p in range(1, PASSES_PER_SECTION+1):
-    #         if len(refinement_tasks) < MAX_REAL_TASKS:
-    #             # 🌟 FIX 6: Update task description to reference {{draft_content}}
-    #             refinement_tasks.append(Task(description=f"Refine micro {idx} pass {p}: add small digression/hesitancy to the draft: {{draft_content}}.", expected_output=f"micro-{idx}-p{p}", agent=m))
-    # tasks.extend(refinement_tasks)
-
-    # injectors: memory noise + rhythm
-    # 🌟 FIX 6: Update task description to reference {{draft_content}}
-    #tasks.append(Task(description='Introduce tiny memory inconsistencies across the draft: {{draft_content}}.', expected_output='memory-noise', agent=memory_noise))
-    #tasks.append(Task(description='Apply rhythm changes across draft to break sentence length regularity. Draft: {{draft_content}}.', expected_output='rhythm-changed', agent=rhythm))
-
-    # merge & global passes: overthink -> entropy -> final disorder -> publisher
-    # 🌟 FIX 6: Update task description to reference {{draft_content}}
-    #tasks.append(Task(description='Overthink full-document messy pass on draft: {{draft_content}}.', expected_output='overthought-draft', agent=overthink))
-    #tasks.append(Task(description='Entropy model-mix rewrite to break model fingerprints. Draft: {{draft_content}}.', expected_output='entropy-draft', agent=entropy))
-    #tasks.append(Task(description='Final readable disorder pass on draft: {{draft_content}}.', expected_output='final-disorder', agent=final_disorder))
-    #tasks.append(Task(description='Format article for publish (markdown). Draft: {{draft_content}}.', expected_output='publish-ready', agent=publisher))
-
     # assemble agents list
     agents = [
         researcher, writer, editor,
         *micro_agents,
-        #memory_noise, rhythm,
-        #overthink,
-        #final_disorder
     ]
     # ---------------- Run crew ----------------
 
@@ -398,4 +369,3 @@ if __name__ == '__main__':
             writer_goal='Write a first messy draft about the topic.',
             editor_goal='Lightly edit for clarity but preserve mess.'
         )
-        #st.json(out)

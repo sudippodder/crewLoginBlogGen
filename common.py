@@ -24,52 +24,10 @@ def update_output_to_db(user_id, **fields):
     conn.commit()
     conn.close()
 
-# def update_output_to_db(id, topic, researcher_goal, researcher_backstory,
-#                       writer_goal, writer_backstory,
-#                       editor_goal, editor_backstory,
-#                       final_output, detection_result):
 
-#     conn = sqlite3.connect(DATABASE_FILE)
-#     c = conn.cursor()
-
-#     c.execute("""
-#         UPDATE content_history SET
-#             topic = ?, researcher_goal = ?, researcher_backstory = ?,
-#             writer_goal = ?, writer_backstory = ?,
-#             editor_goal = ?, editor_backstory = ?,
-#             final_output = ?, detection_result = ?
-#         WHERE id = ?
-#     """, (
-#         topic,
-#         researcher_goal, researcher_backstory,
-#         writer_goal, writer_backstory,
-#         editor_goal, editor_backstory,
-#         final_output, detection_result,
-#         id
-#     ))
-#     conn.commit()
-#     conn.close()
 
 def save_to_db(source_type, source_value, result_json):
-    # data = json.loads(result_json)
 
-    # conn = sqlite3.connect(DATABASE_FILE)
-    # cursor = conn.cursor()
-
-    # cursor.execute("""
-    #     INSERT INTO micro_roles
-    #     (source_type, source_value, role, tone, style, patterns, generated_json, created_at)
-    #     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    # """, (
-    #     source_type,
-    #     source_value,
-    #     json.dumps(data.get("roles")),
-    #     data.get("tone"),
-    #     data.get("style"),
-    #     json.dumps(data.get("patterns")),
-    #     result_json,
-    #     datetime.now().isoformat()
-    # ))
     user = st.session_state['user_info']
     user_id = user['id']
 
@@ -111,8 +69,6 @@ def navigate_to(page_name: str):
 
 def get_selected_tones_by_user(user_id):
     """Retrieves all tones created by a specific user."""
-    # user = st.session_state['user_info']
-    # user_id = user['id']
 
     conn = sqlite3.connect(DATABASE_FILE)
     c = conn.cursor()
@@ -131,10 +87,8 @@ def get_selected_tones_by_user(user_id):
         role_json = json.loads(post[0])
         sposts = role_json.get("micro_agent_list") if isinstance(role_json, dict) else None
         res.append(sposts if sposts else None)
-    #posts = [json.loads(row[0]) for row in posts]  # Parse JSON strings into Python objects
-    #suggested_agents = role_json.get("micro_agent_list") if isinstance(role_json, dict) else None
     result = [item for arr in res for item in arr]
-    #result = res.flat()
+
     if not result:
         result = [
             'sarcastic friend','nostalgic storyteller','curious teacher','chaotic thinker','casual confidant',
@@ -147,10 +101,7 @@ def get_selected_tones_by_user(user_id):
 
 def get_all_personalities(user_id=None):
     """Retrieves all tones created by a specific user."""
-    # user = st.session_state['user_info']
-    # user_id = user['id']
     user = st.session_state.get("user_info")
-    #user = st.session_state['user_info']
     try:
         user_id = user['id']
     except TypeError:
@@ -175,15 +126,12 @@ def get_all_personalities(user_id=None):
         role_json = json.loads(post[0])
         sposts = role_json.get("micro_agent_list") if isinstance(role_json, dict) else None
         res.append(sposts if sposts else None)
-    #posts = [json.loads(row[0]) for row in posts]  # Parse JSON strings into Python objects
-    #suggested_agents = role_json.get("micro_agent_list") if isinstance(role_json, dict) else None
     result = [item for arr in res for item in arr]
     if not result:
         result = [
             'sarcastic friend','nostalgic storyteller','curious teacher','chaotic thinker','casual confidant',
             'skeptical critic','optimistic mentor','grumpy old-timer','chatty neighbor','daydreamer'
         ]
-    #result = res.flat()
     conn.close()
     return result
 
@@ -274,3 +222,12 @@ def delete_custom_tone(user_id):
 
 def get_conn():
     return sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+
+def get_row_conn():
+    conn = sqlite3.connect(DATABASE_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def unescape_text(text):
+    return bytes(text, "utf-8").decode("unicode_escape")

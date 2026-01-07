@@ -1,9 +1,6 @@
 import streamlit as st
 import json
 
-# st.set_page_config(page_title="Blog Template Builder", layout="wide")
-# st.title("🧠 Dynamic Blog Template Builder (CrewAI Ready)")
-
 # ----------------------------------------
 # Load Template
 # ----------------------------------------
@@ -103,8 +100,6 @@ def main():
     # ----------------------------------------
     st.divider()
     st.subheader("📦 Final JSON Output")
-
-    #st.json(edited_template)
 
     st.download_button(
         "⬇ Download Template JSON",

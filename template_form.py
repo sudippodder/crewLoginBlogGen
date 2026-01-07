@@ -42,7 +42,7 @@ def main():
         if row:
             existing = json.loads(row[0])
 
-    st.title("🧩 Template Form")
+    st.title("🧩 Case Study Template Form")
     if st.button("⬅ Back to List"):
         st.session_state["params"]["current_page"] = "template_type"
         st.session_state["params"]["page"] = "template type"

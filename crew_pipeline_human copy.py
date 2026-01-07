@@ -52,9 +52,6 @@ def safe_output_to_json(result):
 # Assuming the run_pipeline and CrewAI setup are in place...
 
 
-
-# PROGRESS_LOG = []
-
 def run_safe_pipeline_with_progress(crew, tasks):
     """
     Corrected version of V8. Runs the CrewAI pipeline with task-by-task progress.
@@ -175,11 +172,7 @@ def run_safe_pipeline_with_progress(crew, tasks):
 
 
 # ---------------- Config (tune these) ----------------
-# MICRO_INTRO = 2
-# MICRO_BODY = 4
-# MICRO_CONCLUSION = 2
-# PASSES_PER_SECTION = int(os.getenv('HUMANIZER_REFINEMENTS', 1))
-# MAX_REAL_TASKS = 40
+
 MICRO_INTRO = 2
 MICRO_BODY = 4
 MICRO_CONCLUSION = 2
@@ -197,14 +190,12 @@ if "user_info" not in st.session_state:
     ]
 else:
     user = st.session_state.get("user_info")
-    #user = st.session_state['user_info']
     try:
         user_id = user['id']
     except TypeError:
         # This catches the 'NoneType' object is not subscriptable error
         print("Error: Failed to retrieve user data (variable 'user' is None).")
         user_id = None
-    #user_id = user['id']
     selected_tones = common.get_selected_tones_by_user(user_id)
     PERSONALITIES = selected_tones if selected_tones else PERSONALITIES
 
@@ -217,7 +208,7 @@ PRIMARY_MODEL = os.getenv('PRIMARY_MODEL', 'gpt-4.1-mini')
 ENTROPY_MODEL = os.getenv('ENTROPY_MODEL', 'gpt-4o-mini')
 
 # ---------------- Pipeline builder (compact B) ----------------
-#st.json(PERSONALITIES)
+
 
 def run_pipeline(topic: str,
                          researcher_goal: str,
@@ -372,9 +363,7 @@ def run_pipeline(topic: str,
 
     # merge & global passes: overthink -> entropy -> final disorder -> publisher
     tasks.append(Task(description='Overthink full-document messy pass.', expected_output='overthought-draft', agent=overthink))
-    #tasks.append(Task(description='Entropy model-mix rewrite to break model fingerprints.', expected_output='entropy-draft', agent=entropy))
     tasks.append(Task(description='Final readable disorder pass.', expected_output='final-disorder', agent=final_disorder))
-    #tasks.append(Task(description='Format article for publish (markdown).', expected_output='publish-ready', agent=publisher))
 
     # assemble agents list
     agents = [
@@ -384,11 +373,6 @@ def run_pipeline(topic: str,
         overthink,entropy,
         final_disorder
     ]
-    #, entropy
-    #, publisher
-    # st.json({'total_agents': len(agents), 'total_tasks': len(tasks)})
-    # st.json(agents)
-    # st.json(tasks)
     # ---------------- Run crew ----------------
 
 

@@ -20,7 +20,6 @@ def display_highlighted_text(detection_result):
     text_words = data.get("textWords", 0)
 
     # Highlight AI-generated segments
-    #st.json(data)
     highlighted_text = input_text
     for term in ai_segments:
         pattern = re.escape(term)
@@ -36,7 +35,6 @@ def display_highlighted_text(detection_result):
     st.session_state.setdefault("editable_text", highlighted_text)
     st.session_state.setdefault("record_id", record_id)
     # --- Section Header ---
-    #st.markdown("---")
     st.markdown("### 📝 Detected Content")
     # VIEW MODE
     safe_text = highlighted_text.replace("\n", "<br/>")
@@ -87,20 +85,6 @@ def display_highlighted_text(detection_result):
     # --- Detection Summary (always visible) ---
     # label = "🧠 AI-Generated" if is_human == 0 else "🧍 Human-Written"
     # color = "red" if is_human == 0 else "green"
-
-    # st.markdown(
-    #     f"""
-    #     <div style="padding:15px;border-radius:10px;background-color:#ffffff;">
-    #         <h4 style="margin:0;">Prediction: <span style="color:{color};">{label}</span></h4>
-    #         <p style="margin:5px 0;"><b>Feedback:</b> {feedback}</p>
-    #         <p style="margin:5px 0;"><b>AI Probability:</b> {fake_percentage:.2f}%</p>
-    #         <p style="margin:5px 0;"><b>Total Words:</b> {text_words} |
-    #         <b>AI Words:</b> {ai_words} |
-    #         <b>Human Words:</b> {max(text_words - ai_words, 0)}</p>
-    #     </div>
-    #     """,
-    #     unsafe_allow_html=True,
-    # )
     st.markdown(
         """
         <style>
@@ -115,14 +99,6 @@ def display_highlighted_text(detection_result):
         </style>""",
         unsafe_allow_html=True
     )
-    # st.markdown(
-    #     """
-    #     <div style="padding:10px; border-radius:10px; background-color:#f5f5f5;">
-    #         <span style="background-color:yellow;">AI-Generated Text</span> is highlighted below.
-    #     </div>
-    #     """,
-    #     unsafe_allow_html=True
-    # )
     st.progress(min(max(fake_percentage / 100, 0), 1))
 
     # --- Highlighted / Editable Section ---
@@ -158,8 +134,6 @@ def display_highlighted_text(detection_result):
                     st.session_state.detection_result = new_detection
                     st.session_state.show_editor = False
                     st.session_state.editable_text = edited_text
-                    #st.markdown(f"### 1text {edited_text}")
-                    #st.markdown(f"### 2text {new_detection}")
                     record_id = st.session_state.record_id
                     if record_id:
                         common.update_output_to_db(

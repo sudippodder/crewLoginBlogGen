@@ -50,22 +50,16 @@ except Exception:
     textstat = None
 
 
-#from textblob import TextBlob
-#import textstat
-
 # LLM
 import openai
 import common
 load_dotenv()
 # Setup ----
 st.set_page_config(page_title="Micro Humanizer Role Generator", layout="wide")
-#nlp = spacy.load("en_core_web_sm")
-
 DATABASE_FILE = os.getenv("DATABASE_FILE")
 # Developer-provided uploaded file path from earlier session (included as example)
 SAMPLE_LOCAL_PATH = '/mnt/data/A_flowchart_titled_"CrewAI_Multi-Agent_System"_ill.png'
 openai_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_KEY")
-#st.markdown(f"---{openai_key}")
 # Utility functions ----
 def clean_whitespace(text: str) -> str:
     return re.sub(r'\s+', ' ', text).strip()
@@ -108,65 +102,6 @@ def load_local_text_file(path: str) -> str:
             return clean_whitespace(f.read())
     # For other filetypes (image, pdf) we return empty; app will handle preview
     return ""
-
-# Text analysis ----
-# def analyze_text_features(text: str) -> Dict[str, Any]:
-#     #doc = nlp(text[:20000])  # limit for speed
-#     #sentences = list(doc.sents)
-#     sent_texts = [s.text.strip() for s in sentences if s.text.strip()]
-#     #words = [token.text for token in doc if token.is_alpha]
-
-#     if nlp:
-#         doc = nlp(text[:20000])
-#         sentences = list(doc.sents)
-#         words = [token.text for token in doc if token.is_alpha]
-#     else:
-#         # fallback: naive sentence split + tokenization
-#         sentences = [s.strip() for s in re.split(r'[.!?]\s+', text[:20000]) if s.strip()]
-#         words = re.findall(r'\b[a-zA-Z]+\b', text[:20000])
-#     if TextBlob:
-#         polarity = TextBlob(text).sentiment.polarity
-#         subjectivity = TextBlob(text).sentiment.subjectivity
-#     else:
-#         polarity = 0.0
-#         subjectivity = 0.0
-#     if textstat and len(text.split()) > 100:
-#         flesch = textstat.flesch_reading_ease(text)
-#     else:
-#         flesch = None
-
-#     avg_sentence_len = sum(len(s.split()) for s in sent_texts) / max(1, len(sent_texts))
-#     sentence_var = (sum((len(s.split()) - avg_sentence_len)**2 for s in sent_texts) / max(1, len(sent_texts)))**0.5
-#     lexical_diversity = len(set(words))/max(1, len(words))
-#     #polarity = TextBlob(text).sentiment.polarity
-#     #subjectivity = TextBlob(text).sentiment.subjectivity
-#     #flesch = textstat.flesch_reading_ease(text) if len(text.split())>100 else None
-#     common_transitions = []
-#     # small heuristic: find frequent transition phrases
-#     transitions = ["however","therefore","meanwhile","in reality","that said","on the other hand","but then"]
-#     lowered = text.lower()
-#     for t in transitions:
-#         if lowered.count(t) > 0:
-#             common_transitions.append(t)
-#     # simple top keywords (by frequency)
-#     token_freq = {}
-#     for w in words:
-#         token_freq[w.lower()] = token_freq.get(w.lower(), 0) + 1
-#     top_keywords = sorted(token_freq.items(), key=lambda x: x[1], reverse=True)[:20]
-#     return {
-#         "word_count": len(words),
-#         "sentence_count": len(sent_texts),
-#         "avg_sentence_length": round(avg_sentence_len, 2),
-#         "sentence_length_stddev": round(sentence_var, 2),
-#         "lexical_diversity": round(lexical_diversity, 3),
-#         "polarity": round(polarity, 3),
-#         "subjectivity": round(subjectivity, 3),
-#         "flesch_reading_ease": round(flesch,2) if flesch is not None else None,
-#         "common_transitions": common_transitions,
-#         "top_keywords": [k for k,v in top_keywords],
-#     }
-
-
 def analyze_text_features(text: str) -> Dict[str, Any]:
     """
     Robust text analysis that works whether spaCy (nlp) is available or not.
@@ -340,7 +275,6 @@ def generate_role_with_llm(text: str, stats: Dict[str,Any], topic: Optional[str]
     role, goal, backstory, tasks, tone, style, patterns, micro_agent_list
     """
     openai_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_KEY")
-    #st.markdown(f"---{openai_key}")
     if not openai_key:
         # fallback
         return {"warning": "OPENAI_API_KEY not set; returned template fallback", **build_role_template(stats, topic)}
@@ -432,12 +366,10 @@ def default_view():
         st.markdown("---")
         st.text_input("Topic hint (optional)", key="topic_hint")
         coll1, coll2 = st.columns(2)
-        #st.text_input("Optional: OpenAI model to use (env override)", value=os.getenv("OPENAI_MODEL","gpt-4o-mini"), key="model_override")
         with coll1:
             generate_btn = st.button("Generate Micro Humanizer Role")
         with coll2:
             if st.button("Back"):
-                #common.navigate_to("clear")
                 st.session_state['page'] = "tone"
                 st.session_state['spage'] = ""
                 st.rerun()
@@ -447,8 +379,6 @@ def default_view():
         st.markdown("- Uses `newspaper3k` + `BeautifulSoup` to extract text from URLs.")
         st.markdown("- Uses spaCy + TextBlob + textstat to compute features.")
         st.markdown("- Uses OpenAI ChatCompletion (if OPENAI_API_KEY is set) or fallback template.")
-        # st.markdown("### Example local path (from upload):")
-        # st.code(SAMPLE_LOCAL_PATH)
 
     # Generation flow ----
     role_json = st.session_state.get('role_json')
@@ -486,14 +416,9 @@ def default_view():
             st.error(f"Failed to load content: {e}")
             st.stop()
 
-        # st.markdown("#### Extracted Preview (first 1000 chars)")
-        # st.code((raw_text[:1000] + "...") if len(raw_text) > 1000 else raw_text)
-
         # Analyze
         with st.spinner("Analyzing text features..."):
             stats = analyze_text_features(raw_text)
-        #st.success("Analysis complete")
-        #st.json(stats)
 
         # Ask LLM to generate micro-humanizer role JSON
         with st.spinner("Generating Micro Humanizer Role via LLM / fallback..."):
@@ -502,19 +427,11 @@ def default_view():
             if not role_json:
                 role_json = generate_role_with_llm(raw_text, stats, topic_hint)
                 st.session_state['role_json'] = role_json
-        # st.markdown("### Generated Micro Humanizer Role (JSON)")
-        # st.json(role_json)
 
         # Save JSON to file
         safe_topic = (topic_hint or "topic").replace(" ", "_")[:40]
         ts = int(time.time())
         out_path = f"micro_humanizer_{safe_topic}_{ts}.json"
-        # try:
-        #     with open(out_path, "w", encoding="utf-8") as f:
-        #         json.dump(role_json, f, indent=2)
-        #     st.success(f"Saved role JSON to `{out_path}`")
-        # except Exception as e:
-        #     st.warning(f"Could not save JSON to disk: {e}")
 
         # Provide suggested micro-agent definitions in YAML-ish format for quick copy
         st.markdown("### Suggested micro-agent list (quick starter)")
@@ -526,10 +443,7 @@ def default_view():
 
         st.markdown("---")
         st.markdown("Done. Use this output to instantiate your micro-agents dynamically in your CrewAI pipeline.")
-        # save_btn = st.button("Save")
         if st.button("Save To SQLite DB"):
-            #st.markdown(f"""### Saving to local SQLite DB...{source_type} role_json > {raw_text}""")
-            #st.stop()
             if source_type == "URL":
                 source_type = 'URL : ' + url
             try:
@@ -549,7 +463,6 @@ def tone_list_default_view():
     st.session_state['page'] = "micro_humanizer_generator"
     with col1:
         st.markdown("### Input")
-        #, "Upload local text file", "Use sample local path"
         source_type = st.selectbox("Input type", ["URL", "Paste content"])
         url = ""
         uploaded_text = ""
@@ -571,12 +484,10 @@ def tone_list_default_view():
         st.markdown("---")
         st.text_input("Topic hint (optional)", key="topic_hint")
         coll1, coll2 = st.columns(2)
-        #st.text_input("Optional: OpenAI model to use (env override)", value=os.getenv("OPENAI_MODEL","gpt-4o-mini"), key="model_override")
         with coll1:
             generate_btn = st.button("Generate Micro Humanizer Role")
         with coll2:
             if st.button("Back"):
-                #common.navigate_to("clear")
                 st.session_state['page'] = "tone"
                 st.session_state['spage'] = ""
                 st.rerun()
@@ -586,8 +497,6 @@ def tone_list_default_view():
         st.markdown("- Uses `newspaper3k` + `BeautifulSoup` to extract text from URLs.")
         st.markdown("- Uses spaCy + TextBlob + textstat to compute features.")
         st.markdown("- Uses OpenAI ChatCompletion (if OPENAI_API_KEY is set) or fallback template.")
-        # st.markdown("### Example local path (from upload):")
-        # st.code(SAMPLE_LOCAL_PATH)
 
     # Generation flow ----
     role_json = st.session_state.get('role_json')
@@ -625,14 +534,9 @@ def tone_list_default_view():
             st.error(f"Failed to load content: {e}")
             st.stop()
 
-        # st.markdown("#### Extracted Preview (first 1000 chars)")
-        # st.code((raw_text[:1000] + "...") if len(raw_text) > 1000 else raw_text)
-
         # Analyze
         with st.spinner("Analyzing text features..."):
             stats = analyze_text_features(raw_text)
-        #st.success("Analysis complete")
-        #st.json(stats)
 
         # Ask LLM to generate micro-humanizer role JSON
         with st.spinner("Generating Micro Humanizer Role via LLM / fallback..."):
@@ -641,19 +545,11 @@ def tone_list_default_view():
             if not role_json:
                 role_json = generate_role_with_llm(raw_text, stats, topic_hint)
                 st.session_state['role_json'] = role_json
-        # st.markdown("### Generated Micro Humanizer Role (JSON)")
-        # st.json(role_json)
 
         # Save JSON to file
         safe_topic = (topic_hint or "topic").replace(" ", "_")[:40]
         ts = int(time.time())
         out_path = f"micro_humanizer_{safe_topic}_{ts}.json"
-        # try:
-        #     with open(out_path, "w", encoding="utf-8") as f:
-        #         json.dump(role_json, f, indent=2)
-        #     st.success(f"Saved role JSON to `{out_path}`")
-        # except Exception as e:
-        #     st.warning(f"Could not save JSON to disk: {e}")
 
         # Provide suggested micro-agent definitions in YAML-ish format for quick copy
         st.markdown("### Suggested micro-agent list (quick starter)")
@@ -665,10 +561,7 @@ def tone_list_default_view():
 
         st.markdown("---")
         st.markdown("Done. Use this output to instantiate your micro-agents dynamically in your CrewAI pipeline.")
-        # save_btn = st.button("Save")
         if st.button("Save To SQLite DB"):
-            #st.markdown(f"""### Saving to local SQLite DB...{source_type} role_json > {raw_text}""")
-            #st.stop()
             if source_type == "URL":
                 source_type = 'URL : ' + url
             try:

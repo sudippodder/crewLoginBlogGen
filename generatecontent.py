@@ -1,5 +1,4 @@
 import streamlit as st
-#from crew_pipeline import run_pipeline
 from crew_pipeline_human import run_pipeline
 from zerogpt_api import check_ai_content
 import sqlite3
@@ -24,7 +23,6 @@ def load_record(record_id):
 
 #from tools.serper_tool import SerperTool
 def redirect_to_edit(record_id):
-    #refresh=true&page=content
     st.query_params.update({"refresh": "true", "page": "content", "id": record_id, "mode": "edit"})
     st.rerun()
 
@@ -76,21 +74,16 @@ def generate_content_page():
     record_id = params.get("id", None)
     row = [None] * 10  # Default empty row with 8 elements
     if mode == "edit" and record_id:
-        #st.markdown(record_id, unsafe_allow_html=True)
         row = load_record(record_id)
     elif st.session_state.get('spage', '') == 'gencontent' and st.session_state.get('content_id', None):
         row = load_record(st.session_state.get('content_id'))
 
     st.title("✍️ Generate AI Blog Content")
     Tones = common.get_custom_tone(user_id)
-    #st.json(Tones[:, 0])
     if Tones is not None and len(Tones) > 0:
         single_t = convert_to_single_line(Tones)
     else:
         single_t = None
-
-    #st.json(single_t)
-    #st.json(common.get_all_personalities())
 
 
     st.dataframe({'Tones':common.get_all_personalities()})
@@ -112,15 +105,8 @@ def generate_content_page():
         st.session_state.detection_result = None
 
       # --- Initialize session state ---
-    # st.session_state.setdefault("generated_content", None)
-    # st.session_state.setdefault("detection_result", None)
     st.session_state.setdefault("show_editor", False)
     st.session_state.setdefault("editable_text", "")
-    # st.markdown(record_id, unsafe_allow_html=True)
-
-    #st.markdown(f"{record_id} >> {mode}", unsafe_allow_html=True)
-
-
 
     if st.button("🚀 Generate Content"):
 
@@ -159,33 +145,13 @@ def generate_content_page():
                         editor_goal=editor_goal,
                         editor_backstory=editor_backstory,
                     )
-                    #st.json(res)
-                    #results = res['result']
+
                     results = task_description
-                    #st.markdown(results, unsafe_allow_html=True)
-                    #json_res = json.loads(res)
-
-                    #st.json(json_res)
-
-
-                    #st.markdown(json_res['result'], unsafe_allow_html=True)
-                    #st.json(json_res['result'])
-                    # st.markdown(results, unsafe_allow_html=True)
-                    # st.subheader("Metadata")
-                    #st.json(out_map)
-
-
 
                     # ----- Save for editing -----
                     st.session_state.generated_content = results
                     st.session_state.editable_text = results
-                    #st.json(results)
-                    # ----- AI Detection (Send final text ONLY) -----
-                    #st.markdown("### 🧩 {results}".format(results="AI Detection Results")   )
                     detection_result = check_ai_content(results)
-
-                    #st.json(detection_result)
-                    #st.markdown("### 🧩 {detection_result}".format(detection_result="AI Detection Results"))
                     st.session_state.detection_result = detection_result
                     record_id = save_output_to_db(
                         topic,
@@ -196,86 +162,22 @@ def generate_content_page():
                     )
 
                     # REDIRECT
-                    #redirect_to_edit(record_id)
-                    # if "error" in detection_result:
-                    #     st.error(detection_result["error"])
-                    # else:
-                    #     display_highlighted_text(detection_result)
                     st.success("✅ Generation complete! Scroll down to see the AI detection results.")
 
                 except Exception as e:
                     st.error(f"Error: {e}")
-                # try:
-                #     final, result = run_pipeline(
-                #         topic=topic,
-                #         researcher_goal=researcher_goal,
-                #         researcher_backstory=researcher_backstory,
-                #         writer_goal=writer_goal,
-                #         writer_backstory=writer_backstory,
-                #         editor_goal=editor_goal,
-                #         editor_backstory=editor_backstory,
-                #         tone="casual",
-                #         creativity=0.95,
-                #         humanizer_passes=10,
-                #         entropy_strength=1.3,
-                #         seo_keywords=["coffee", "caffeine", "sleep"],
-                #         micro_intro=None,
-                #         micro_body=None,
-                #         micro_conclusion=None,
-                #         ui=True,
-                #     )
-                #     st.subheader("Final Output")
-                #     st.markdown(final, unsafe_allow_html=True)
-
-                #     st.json(result)
-                #     # file_path = "outputs/For_Audience_Engagement.txt"  # Replace with your file name or full path
-                #     # # Open the file in read mode ('r')
-                #     # with open(file_path, "r", encoding="utf-8") as file:
-                #     #     content = file.read()
-
-                #     # result = content
-
-                #     #st.json(serper_tool)
-                #     #return serper_tool
-
-                #     #result = "Sample generated content based on the topic."
-                #     st.session_state.generated_content = result
-                #     st.session_state.editable_text = result
-                #     #st.session_state.detection_result = check_ai_content(result)
-                #     #display_paragraphs_with_detection(result)
-                #     detection_result = check_ai_content(result)
-                #     st.session_state.detection_result = detection_result
-
-                #     # if "error" in detection_result:
-                #     #     st.error(detection_result["error"])
-                #     # else:
-                #     #     display_highlighted_text(detection_result)
-
-                #     st.success("✅ Generation complete! See below for AI detection results.")
-                # except Exception as e:
-                #     st.error(f"Error: {e}")
         else:
             st.warning("Please enter a topic first.")
 
-    # if st.session_state.generated_content:
-    #     st.subheader("📝 Generated Content")
-    #     st.markdown(st.session_state.generated_content)
-    #st.json(row[9])
-    # if row[9] != None and row[9] != "":
-    #     detection_result = json.loads(row[9])
 
 
     if row and row[9] is not None and row[9] != "":
-        #st.session_state.generated_content = results
         param = json.loads(row[9])
         data = param.get("data", {})
         input_text = data.get("input_text", "")
         st.session_state.editable_text = input_text
         display_highlighted_text(param)
     else:
-        # st.session_state.get("detection_result")
-        #st.markdown("---")
-        #st.subheader("🧩 AI Detection Results")
         if st.session_state.detection_result:
             display_highlighted_text(st.session_state.detection_result)
     return

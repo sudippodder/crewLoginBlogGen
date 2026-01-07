@@ -18,46 +18,6 @@ load_dotenv()
 # DATABASE INITIALIZATION
 # ----------------------------
 openai_key = os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_KEY")
-#conn = sqlite3.connect("app.db", check_same_thread=False)
-# DATABASE_FILE = os.getenv("DATABASE_FILE")
-# conn = sqlite3.connect(DATABASE_FIL, check_same_thread=False)
-# cursor = conn.cursor()
-
-# cursor.execute("""
-# CREATE TABLE IF NOT EXISTS users (
-#     id INTEGER PRIMARY KEY AUTOINCREMENT,
-#     username TEXT UNIQUE,
-#     password TEXT
-# );
-# """)
-
-# cursor.execute("""
-# CREATE TABLE IF NOT EXISTS templates (
-#     id INTEGER PRIMARY KEY AUTOINCREMENT,
-#     user_id INTEGER,
-#     template_title TEXT,
-#     audience TEXT,
-#     tone_style TEXT,
-#     content_structure TEXT,
-#     notes_for_editors TEXT,
-#     expected_length TEXT,
-#     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-# );
-# """)
-
-# cursor.execute("""
-# CREATE TABLE IF NOT EXISTS contents (
-#     id INTEGER PRIMARY KEY AUTOINCREMENT,
-#     user_id INTEGER,
-#     topic TEXT,
-#     template_id INTEGER,
-#     generated_content TEXT,
-#     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-# );
-# """)
-
-#conn.commit()
-
 # ----------------------------
 # BASIC LOGIN SYSTEM
 # ----------------------------
@@ -91,55 +51,6 @@ def json_to_html(json_data):
     return html
 
 
-# def blog_json_to_html(data):
-#     import json
-
-#     # 🔒 SAFETY: Convert string → dict
-#     if isinstance(data, str):
-#         data = json.loads(data)
-
-#     article = data.get("article", {})
-
-#     html = ["<article>"]
-
-#     # Header
-#     header = article.get("header", {})
-#     if header:
-#         html.append("<header>")
-#         if "h1" in header:
-#             html.append(f"<h1>{header['h1']}</h1>")
-#         if "p" in header:
-#             html.append(f"<p>{header['p']}</p>")
-#         html.append("</header>")
-
-#     # Sections
-#     for section in article.get("sections", []):
-#         section_id = section.get("id", "section")
-#         html.append(f"<section id='{section_id}'>")
-
-#         if "h2" in section:
-#             html.append(f"<h2>{section['h2']}</h2>")
-#         if "p" in section:
-#             html.append(f"<p>{section['p']}</p>")
-
-#         if "ul" in section:
-#             html.append("<ul>")
-#             for item in section["ul"]:
-#                 html.append(f"<li>{item.get('li','')}</li>")
-#             html.append("</ul>")
-
-#         html.append("</section>")
-
-#     # Footer
-#     footer = article.get("footer", {})
-#     if footer:
-#         html.append("<footer>")
-#         if "p" in footer:
-#             html.append(f"<p>{footer['p']}</p>")
-#         html.append("</footer>")
-
-#     html.append("</article>")
-#     return "\n".join(html)
 
 def blog_json_to_html(data):
     import json
@@ -395,11 +306,8 @@ def blog_html_to_json(html: str) -> dict:
 # ----------------------------
 def generate_content(topic, template_json):
     conn = common.get_conn()
-    #openai.api_key = openai_key
     client = OpenAI()
     BLOG_TEMPLATE = template_json
-
-
     ##----------------------Agent Setup----------------------##
     seo_researcher = Agent(
         role="SEO Research Analyst",
@@ -515,28 +423,6 @@ RULES:
 </article>
 """
 
-
-    # writing_task = Task(
-    #     description=f"""
-    # Using the research provided, write a full blog article
-    # STRICTLY following this template:
-
-    # Template Structure:
-    # {BLOG_TEMPLATE['content_structure']}
-
-    # Tone & Style Rules:
-    # {BLOG_TEMPLATE['tone_style']}
-
-    # IMPORTANT:
-    # - Fill EVERY field
-    # - Output must be VALID JSON
-    # - Keys must match section/field names
-    # - Do NOT mention AI
-    # """,
-    #     expected_output="Template-compliant blog JSON",
-    #     agent=content_writer,
-    #     context=[research_task]
-    # )
     writing_task = Task(
     description=f"""
     Generate a complete blog article using ONLY valid HTML.
@@ -591,15 +477,9 @@ RULES:
     ##----------------------Task Setup----------------------##
     agents=[seo_researcher, content_writer, html_editor, seo_editor]
     tasks=[research_task, writing_task, html_fix_task, editing_task]
-    # crew = Crew(
-    #     agents=[seo_researcher, content_writer, html_editor, seo_editor],
-    #     tasks=[research_task, writing_task, html_fix_task, editing_task],
-    #     process=Process.sequential
-    # )
     crew = Crew(agents=agents, tasks=tasks, verbose=True, process="sequential", tracing=True)
     result, task_description = run_safe_pipeline_with_progress(crew, tasks, topic=topic)
     result = crew.kickoff(inputs={"topic": topic})
-    #st.json(result.to_dict())
     return result.raw
 
 
@@ -711,63 +591,7 @@ def as_list(value):
 def as_str(value):
     return value if isinstance(value, str) else ""
 
-# def blog_json_to_html(blog_json: dict) -> str:
-#     html = []
 
-#     # --- SEO Meta (commented for CMS use) ---
-#     meta = as_dict(blog_json.get("Meta Information", {}))
-#     html.append(f"<!-- SEO Title: {meta.get('SEO Title','')} -->")
-#     html.append(f"<!-- SEO Description: {meta.get('SEO Description','')} -->")
-#     html.append(f"<!-- Primary Keywords: {', '.join(meta.get('Primary Keywords', []))} -->")
-
-#     # --- Header ---
-#     header = as_dict(blog_json.get("Header", {}))
-#     html.append(f"<h1>{header.get('Main Headline','')}</h1>")
-#     if header.get("Subheadline"):
-#         html.append(f"<h2>{header.get('Subheadline')}</h2>")
-#     if header.get("Hero Image URL"):
-#         html.append(f"<img src='{header['Hero Image URL']}' alt='{header.get('Main Headline','')}' />")
-
-#     # --- Introduction ---
-#     intro = as_dict(blog_json.get("Introduction", {}))
-#     for key in ["Hook sentence", "Context", "Why this topic matters", "Learning outcome"]:
-#         if intro.get(key):
-#             html.append(f"<p>{intro[key]}</p>")
-
-#     # --- Main Sections ---
-#     sections = as_list(blog_json.get("Main Sections"))
-#     for section in sections:
-#         section = as_dict(section)
-#         html.append(f"<h2>{as_str(section.get('H2: Key Insight',''))}</h2>")
-#         html.append(f"<p>{as_str(section.get('Explanation paragraph',''))}</p>")
-
-#         bullets = as_list(section.get("Bullets"))
-#         if bullets:
-#             html.append("<ul>")
-#             for bullet in bullets:
-#                 html.append(f"<li>{as_str(bullet)}</li>")
-#             html.append("</ul>")
-
-#         if section.get("Example"):
-#             html.append(f"<blockquote>{section['Example']}</blockquote>")
-
-#     # --- Conclusion ---
-#     conclusion = as_dict(blog_json.get("Conclusion", {}))
-#     html.append("<h2>Conclusion</h2>")
-#     for key in ["Summary", "Action steps", "Final takeaway"]:
-#         if conclusion.get(key):
-#             html.append(f"<p>{conclusion[key]}</p>")
-
-#     # --- CTA ---
-#     cta = blog_json.get("CTA", {})
-#     html.append("<div class='cta'>")
-#     if cta.get("Primary CTA"):
-#         html.append(f"<p><strong>{cta['Primary CTA']}</strong></p>")
-#     if cta.get("Secondary CTA"):
-#         html.append(f"<p>{cta['Secondary CTA']}</p>")
-#     html.append("</div>")
-
-#     return "\n".join(html)
 
 
 def blog_json_to_markdown(blog_json: dict) -> str:
@@ -821,75 +645,33 @@ def blog_json_to_markdown(blog_json: dict) -> str:
 def generate_content_page(user_id):
     conn = common.get_conn()
     cursor = conn.cursor()
-    st.header("Generate Content")
-
+    st.header("Generate Content  ")
     topic = st.text_area("Enter Topic")
-
     cursor.execute("SELECT id, template_title FROM templates_form WHERE user_id=?", (user_id,))
     templates = cursor.fetchall()
-
     template_select = st.selectbox("Choose Template", templates, format_func=lambda x: x[1])
-
-    #st.session_state['bit'] = 0
     if 'bit' not in st.session_state:
         st.session_state['bit'] = 0
     bit = st.session_state['bit']
-    #st.markdown(f"---{bit}---")
     if st.button("Generate") or bit == 2:
         with st.spinner("⏳ Generating content..."):
             template_id = template_select[0]
 
             cursor.execute("SELECT * FROM templates_form WHERE id=?", (template_id,))
             t = cursor.fetchone()
-            #st.json(t[5])
             st.stop()
             template_json = t[5]
             template_json = json.loads(template_json)
             st.subheader("Template (JSON View)")
             st.markdown(json_to_html(template_json), unsafe_allow_html=True)
-            #st.stop()
             generated = generate_content(topic, template_json)
-            #st.json(generated)
-            #blog_json = json.loads(generated)
-            #generated = '[{"section":"Meta Information","fields":{"SEO Title":"India Travel Guide for Business Leaders: Essential Tips & Insights","Slug":"india-travel-guide-business-leaders","SEO Description":"Comprehensive India travel guide tailored for business leaders. Discover visa info, cultural etiquette, key hubs, safety tips, and logistics for successful corporate trips.","Primary Keywords":"India travel guide, Business travel India, India travel tips for executives, India corporate travel guide, India business destination guide, Travel India for business leaders, India business trip planning, India travel essentials for entrepreneurs, Corporate travel India guide","Secondary Keywords":"Best places to visit in India for business travelers, India travel safety for business professionals, India business etiquette and culture, Airport guide India (delhi, mumbai, bengaluru), India visa information for business travelers, India business events and conferences, Hotel recommendations for business travelers in India, Transportation options in India for executives, India travel logistics for entrepreneurs, How to prepare for a business trip to India"}},{"section":"Header","fields":{"Main Headline":"Your Ultimate India Travel Guide for Business Leaders","Subheadline":"Navigate India’s corporate landscape with expert insights on travel, culture, and logistics","Hero Image URL":"https://example.com/images/india-business-travel-hero.jpg"}},{"section":"Introduction","fields":{"Hook sentence":"Planning a business trip to India? Get equipped with everything you need to succeed.","Context":"India is rapidly emerging as a global business hub, with thriving technology, finance, and government sectors attracting entrepreneurs and executives from around the world.","Why this topic matters":"For business leaders, understanding India’s unique travel requirements, cultural nuances, and logistical landscape is essential to maximize productivity and build strong professional partnerships.","Learning outcome":"By the end of this guide, you’ll be fully prepared to plan your India business trip, navigate cultural etiquette, choose optimal business hubs and accommodations, and maintain safety and comfort throughout your journey."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Visa and Travel Essentials for Business Professionals","Explanation paragraph":"Securing the appropriate visa and preparing thoroughly for your trip are crucial first steps for smooth business travel to India. Knowing your visa options, understanding health advisories, and meeting insurance requirements will help you avoid delays and complications.","Bullets":["Apply for the e-Business Visa, which allows multiple entries over a one-year period for short business trips.","Ensure your passport remains valid for at least six months beyond your intended entry date.","Consult a healthcare provider for recommended vaccinations and carry any necessary prescriptions.","Purchase comprehensive travel insurance that covers health issues and travel disruptions.","Keep both digital and physical copies of important documents, including your visa, passport, and insurance."],"Example":"For instance, an entrepreneur attending multiple conferences in Mumbai and Bengaluru within six months can benefit from the e-Business Visa’s flexibility, eliminating the need for repeated visa applications."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Navigating India’s Business Hubs and Transportation","Explanation paragraph":"India’s major business centers each offer distinct advantages and transportation options, enabling efficient travel and productive business operations.","Bullets":["Mumbai: The financial capital of India, hosting major stock exchanges (BSE & NSE) and numerous corporate headquarters.","Bengaluru: Known as India’s tech hub, with a vibrant startup ecosystem and plenty of co-working spaces.","Delhi NCR: The political and administrative center, home to many government offices and multinational corporations.","Use metro systems in Delhi and Bengaluru for efficient urban travel during peak hours.","Rely on trusted ride-hailing services like Ola and Uber for convenient, app-based transportation.","Major airports such as Indira Gandhi International (Delhi), Chhatrapati Shivaji Maharaj (Mumbai), and Kempegowda (Bengaluru) feature business lounges and offer direct international connections."],"Example":"A business leader arriving at Mumbai airport can quickly take a pre-booked Uber to a downtown meeting, then use the local metro system to navigate the city efficiently while avoiding traffic congestion."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Cultural Etiquette and Business Practices in India","Explanation paragraph":"Respecting India’s cultural nuances and business etiquette is vital for smooth communication and building lasting professional relationships.","Bullets":["Address senior executives with proper titles and surnames, such as Mr., Ms., or Dr., to show respect.","Expect indirect communication styles; carefully interpret politeness and pauses during discussions.","Recognize hierarchical decision-making structures; exercise patience during negotiations.","Dress formally and conservatively for business meetings.","Avoid sensitive topics such as politics or religion in conversations.","Be punctual but prepared for minor delays; flexibility helps maintain positive relationships."],"Example":"At a pitch meeting in Delhi, using formal titles and attentively observing subtle cues helped a founder earn trust and successfully secure a partnership."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Safety Tips and Health Considerations for Business Travel","Explanation paragraph":"While India is generally safe for business travelers, staying vigilant and well-prepared can significantly enhance your security and overall experience.","Bullets":["Stay alert in crowded areas, especially in major cities ranked mid-level on the Global Peace Index 2023.","Use hotel safes for valuables and avoid openly displaying expensive electronics or jewelry in public.","Drink only bottled or filtered water; avoid street food unless trusted sources recommend it.","Review travel advisories before and during your trip.","Keep emergency contacts and local embassy information readily accessible.","Carry a basic medical kit and familiarize yourself with nearby hospital options."],"Example":"An executive staying in Bengaluru chose a hotel near the tech park and booked airport transfers through the hotel to avoid unvetted taxis, ensuring smooth and secure transportation."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Optimizing Your Business Trip: Accommodation and Networking Opportunities","Explanation paragraph":"Selecting suitable accommodations and actively engaging in networking events enhance both comfort and business growth during your trip.","Bullets":["Choose hotels offering business amenities, such as meeting rooms, reliable Wi-Fi, and executive lounges.","Consider properties located near key business districts like BKC in Mumbai or Whitefield in Bengaluru.","Utilize co-working spaces for flexible meeting venues and collaboration opportunities.","Attend major industry conferences and business events scheduled during your visit.","Plan meetings within India’s workweek (Monday to Friday), avoiding local holidays.","Use hotel concierge services to arrange local business support or transportation."],"Example":"An entrepreneur staying at the Hilton Mumbai International Airport hotel gained convenient access to conferences and networking lounges, boosting daily productivity."}},{"section":"Conclusion","fields":{"Summary":"India presents dynamic opportunities for business leaders, with thriving hubs, rich culture, and expanding infrastructure. Thoughtful preparation—including visa arrangements, travel logistics, cultural understanding, and safety practices—ensures every business trip is successful and productive.","Action steps":"Begin by applying for the correct visa well in advance, book accommodations close to your business hubs, familiarize yourself with local cultural norms, and plan your transportation ahead. Keep safety top of mind and leverage networking events to broaden your professional connections.","Final takeaway":"With the right planning and approach, your business journey to India can unlock valuable partnerships and lead to lasting success."}},{"section":"CTA","fields":{"Primary CTA":"Download Our India Business Travel Checklist Now","Secondary CTA":"Subscribe for Weekly Business Travel Tips and Updates"}}]'
-            #st.json(generated)
             for section, content in generated.items():
                 with st.expander(section.title(), expanded=True):
                     st.write(content)
 
             blog_json = generated
             st.rerun()
-            # if isinstance(blog_json, str):
-            #     blog_json = json.loads(blog_json)
-            # if isinstance(blog_json, list):
-            #     if len(blog_json) > 0 and isinstance(blog_json[0], dict):
-            #         blog_json = blog_json[0]
-            #     else:
-            #         st.error("Invalid blog JSON structure")
-            #         return
-            # if isinstance(blog_json, str):
-            #     blog_json = json.loads(blog_json)
-            # st.subheader("📄 HTML Preview")
 
-            # st.markdown(blog_json_to_html(blog_json), unsafe_allow_html=True)
-
-            # st.subheader("📝 Markdown Output")
-            # st.code(blog_json_to_markdown(blog_json), language="markdown")
-            # st.stop()
-            # st.subheader("Generated Content")
-            # st.markdown(generated)
-
-            # st.session_state['bit'] = 2
-            # if generated and st.button("Save Content"):
-
-            #     st.session_state['bit'] = 1
-            #     cursor.execute("""
-            #         INSERT INTO contents (user_id, topic, template_id, generated_content)
-            #         VALUES (?, ?, ?, ?)
-            #     """, (user_id, topic, template_id, generated))
-            #     conn.commit()
-            #     st.success("Content saved!")
-            #     st.rerun()
 def sanitize_for_json(obj):
     if isinstance(obj, dict):
         return {k: sanitize_for_json(v) for k, v in obj.items()}
@@ -909,79 +691,55 @@ def sanitize_for_json(obj):
 def generate_casestudy_content_page(user_id):
     conn = common.get_conn()
     cursor = conn.cursor()
-    st.header("Generate Content")
-    #st.markdown(f"Use your {st.session_state.get('page', 'Dashboard')}")
+    st.header("Generate Content (User)")
     topic = st.text_area("Enter Topic")
+    template_types = get_template_types()
 
-    #cursor.execute("SELECT id, template_title FROM templates_form WHERE user_id=?", (user_id,))
-    cursor.execute("SELECT id, template_title FROM templates_form")
-    templates = cursor.fetchall()
+    type_map = {row[1]: row[0] for row in template_types}
+    type_names = list(type_map.keys())
 
-    template_select = st.selectbox("Choose Template", templates, format_func=lambda x: x[1])
+    selected_type_name = st.selectbox(
+        "Template Type",
+        ["-- Select Type --"] + type_names
+    )
+    # --- Template Dropdown (Dependent) ---
+    if selected_type_name != "-- Select Type --":
+        selected_type_id = type_map[selected_type_name]
+        templates = get_templates_by_type(selected_type_id)
 
-    #st.session_state['bit'] = 0
+        if templates:
+            template_map = {row['template_title']: (row['id'], row['data_json']) for row in templates}
+            template_names = list(template_map.keys())
+
+            template_select = st.selectbox(
+                "Template",
+                ["-- Select Template --"] + template_names
+            )
+
+            if template_select != "-- Select Template --":
+                st.success(f"Selected Template: {template_select}")
+                selected_template_id, selected_template_json = template_map[template_select]
+        else:
+            st.warning("No templates found for this type.")
+
     if 'bit' not in st.session_state:
         st.session_state['bit'] = 0
     bit = st.session_state['bit']
-    #st.markdown(f"---{bit}---")
-    if st.button("Generate") :
+    if st.button("Generate") and selected_template_json is not None:
         with st.spinner("⏳ Generating content..."):
-            template_id = template_select[0]
-
-            cursor.execute("SELECT * FROM templates_form WHERE id=?", (template_id,))
-            t = cursor.fetchone()
-            # st.json(t[5])
-            # st.stop()
-            template_json = t[5]
-
-            #st.subheader("Template (JSON View)")
-            #st.markdown(json_to_html(template_json), unsafe_allow_html=True)
-            #st.stop()
-            #generated = generate_content(topic, template_json)
+            template_json = selected_template_json
+            template_id = selected_template_id
             generated = crew_casestudy.generate_blog(topic=topic,template_sections=template_json)
-            #st.json(generated)
-            #st.stop()
             st.success("Case study generated successfully!")
             st.session_state["temp_generated"] = generated
             st.session_state["temp_topic"] = topic
             st.session_state["temp_template_id"] = template_id
-
-            # for section, content in generated.items():
-            #     with st.expander(section.title(), expanded=True):
-            #         st.write(content)
-
             st.download_button(
                 "⬇ Download Blog JSON",
                 json.dumps(generated, indent=2),
                 file_name="blog_output.json",
                 mime="application/json"
             )
-            #blog_json = json.loads(generated)
-            #generated = '[{"section":"Meta Information","fields":{"SEO Title":"India Travel Guide for Business Leaders: Essential Tips & Insights","Slug":"india-travel-guide-business-leaders","SEO Description":"Comprehensive India travel guide tailored for business leaders. Discover visa info, cultural etiquette, key hubs, safety tips, and logistics for successful corporate trips.","Primary Keywords":"India travel guide, Business travel India, India travel tips for executives, India corporate travel guide, India business destination guide, Travel India for business leaders, India business trip planning, India travel essentials for entrepreneurs, Corporate travel India guide","Secondary Keywords":"Best places to visit in India for business travelers, India travel safety for business professionals, India business etiquette and culture, Airport guide India (delhi, mumbai, bengaluru), India visa information for business travelers, India business events and conferences, Hotel recommendations for business travelers in India, Transportation options in India for executives, India travel logistics for entrepreneurs, How to prepare for a business trip to India"}},{"section":"Header","fields":{"Main Headline":"Your Ultimate India Travel Guide for Business Leaders","Subheadline":"Navigate India’s corporate landscape with expert insights on travel, culture, and logistics","Hero Image URL":"https://example.com/images/india-business-travel-hero.jpg"}},{"section":"Introduction","fields":{"Hook sentence":"Planning a business trip to India? Get equipped with everything you need to succeed.","Context":"India is rapidly emerging as a global business hub, with thriving technology, finance, and government sectors attracting entrepreneurs and executives from around the world.","Why this topic matters":"For business leaders, understanding India’s unique travel requirements, cultural nuances, and logistical landscape is essential to maximize productivity and build strong professional partnerships.","Learning outcome":"By the end of this guide, you’ll be fully prepared to plan your India business trip, navigate cultural etiquette, choose optimal business hubs and accommodations, and maintain safety and comfort throughout your journey."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Visa and Travel Essentials for Business Professionals","Explanation paragraph":"Securing the appropriate visa and preparing thoroughly for your trip are crucial first steps for smooth business travel to India. Knowing your visa options, understanding health advisories, and meeting insurance requirements will help you avoid delays and complications.","Bullets":["Apply for the e-Business Visa, which allows multiple entries over a one-year period for short business trips.","Ensure your passport remains valid for at least six months beyond your intended entry date.","Consult a healthcare provider for recommended vaccinations and carry any necessary prescriptions.","Purchase comprehensive travel insurance that covers health issues and travel disruptions.","Keep both digital and physical copies of important documents, including your visa, passport, and insurance."],"Example":"For instance, an entrepreneur attending multiple conferences in Mumbai and Bengaluru within six months can benefit from the e-Business Visa’s flexibility, eliminating the need for repeated visa applications."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Navigating India’s Business Hubs and Transportation","Explanation paragraph":"India’s major business centers each offer distinct advantages and transportation options, enabling efficient travel and productive business operations.","Bullets":["Mumbai: The financial capital of India, hosting major stock exchanges (BSE & NSE) and numerous corporate headquarters.","Bengaluru: Known as India’s tech hub, with a vibrant startup ecosystem and plenty of co-working spaces.","Delhi NCR: The political and administrative center, home to many government offices and multinational corporations.","Use metro systems in Delhi and Bengaluru for efficient urban travel during peak hours.","Rely on trusted ride-hailing services like Ola and Uber for convenient, app-based transportation.","Major airports such as Indira Gandhi International (Delhi), Chhatrapati Shivaji Maharaj (Mumbai), and Kempegowda (Bengaluru) feature business lounges and offer direct international connections."],"Example":"A business leader arriving at Mumbai airport can quickly take a pre-booked Uber to a downtown meeting, then use the local metro system to navigate the city efficiently while avoiding traffic congestion."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Cultural Etiquette and Business Practices in India","Explanation paragraph":"Respecting India’s cultural nuances and business etiquette is vital for smooth communication and building lasting professional relationships.","Bullets":["Address senior executives with proper titles and surnames, such as Mr., Ms., or Dr., to show respect.","Expect indirect communication styles; carefully interpret politeness and pauses during discussions.","Recognize hierarchical decision-making structures; exercise patience during negotiations.","Dress formally and conservatively for business meetings.","Avoid sensitive topics such as politics or religion in conversations.","Be punctual but prepared for minor delays; flexibility helps maintain positive relationships."],"Example":"At a pitch meeting in Delhi, using formal titles and attentively observing subtle cues helped a founder earn trust and successfully secure a partnership."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Safety Tips and Health Considerations for Business Travel","Explanation paragraph":"While India is generally safe for business travelers, staying vigilant and well-prepared can significantly enhance your security and overall experience.","Bullets":["Stay alert in crowded areas, especially in major cities ranked mid-level on the Global Peace Index 2023.","Use hotel safes for valuables and avoid openly displaying expensive electronics or jewelry in public.","Drink only bottled or filtered water; avoid street food unless trusted sources recommend it.","Review travel advisories before and during your trip.","Keep emergency contacts and local embassy information readily accessible.","Carry a basic medical kit and familiarize yourself with nearby hospital options."],"Example":"An executive staying in Bengaluru chose a hotel near the tech park and booked airport transfers through the hotel to avoid unvetted taxis, ensuring smooth and secure transportation."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Optimizing Your Business Trip: Accommodation and Networking Opportunities","Explanation paragraph":"Selecting suitable accommodations and actively engaging in networking events enhance both comfort and business growth during your trip.","Bullets":["Choose hotels offering business amenities, such as meeting rooms, reliable Wi-Fi, and executive lounges.","Consider properties located near key business districts like BKC in Mumbai or Whitefield in Bengaluru.","Utilize co-working spaces for flexible meeting venues and collaboration opportunities.","Attend major industry conferences and business events scheduled during your visit.","Plan meetings within India’s workweek (Monday to Friday), avoiding local holidays.","Use hotel concierge services to arrange local business support or transportation."],"Example":"An entrepreneur staying at the Hilton Mumbai International Airport hotel gained convenient access to conferences and networking lounges, boosting daily productivity."}},{"section":"Conclusion","fields":{"Summary":"India presents dynamic opportunities for business leaders, with thriving hubs, rich culture, and expanding infrastructure. Thoughtful preparation—including visa arrangements, travel logistics, cultural understanding, and safety practices—ensures every business trip is successful and productive.","Action steps":"Begin by applying for the correct visa well in advance, book accommodations close to your business hubs, familiarize yourself with local cultural norms, and plan your transportation ahead. Keep safety top of mind and leverage networking events to broaden your professional connections.","Final takeaway":"With the right planning and approach, your business journey to India can unlock valuable partnerships and lead to lasting success."}},{"section":"CTA","fields":{"Primary CTA":"Download Our India Business Travel Checklist Now","Secondary CTA":"Subscribe for Weekly Business Travel Tips and Updates"}}]'
-            # print(json.dumps(generated, indent=2))
-            # st.json(generated)
-
-            # blog_json = generated
-            # # if isinstance(blog_json, str):
-            # #     blog_json = json.loads(blog_json)
-            # # if isinstance(blog_json, list):
-            # #     if len(blog_json) > 0 and isinstance(blog_json[0], dict):
-            # #         blog_json = blog_json[0]
-            # #     else:
-            # #         st.error("Invalid blog JSON structure")
-            # #         return
-            # if isinstance(blog_json, str):
-            #     blog_json = json.loads(blog_json)
-            # st.subheader("📄 HTML Preview")
-
-            # st.markdown(blog_json_to_html(blog_json), unsafe_allow_html=True)
-
-            # st.subheader("📝 Markdown Output")
-            # st.code(blog_json_to_markdown(blog_json), language="markdown")
-            # st.stop()
-            # st.subheader("Generated Content")
-            # st.markdown(generated)
-
             st.session_state['bit'] = 2
     if "temp_generated" in st.session_state and st.session_state['temp_generated'] not in [None, ""]:
         st.markdown("### Generated Content Preview")
@@ -994,105 +752,91 @@ def generate_casestudy_content_page(user_id):
                     st.write(content)
 
     if ("temp_generated" in st.session_state and st.session_state['temp_generated'] not in [None, ""]) and st.button("Save Content"):
-    #if st.button("Save Content"):
-        #topic = st.session_state["temp_topic"]
         topic = st.session_state.get("temp_topic", "None")
         temp_template_id = st.session_state.get("temp_template_id", "1")
         clean_template = sanitize_for_json(st.session_state['temp_generated'])
-
         json_string = json.dumps(clean_template, ensure_ascii=False)
-
         cursor.execute("""
             INSERT INTO contents (user_id, topic, template_id, generated_content)
             VALUES (?, ?, ?, ?)
         """, (user_id, topic, temp_template_id, json_string))
         conn.commit()
-
         st.session_state['temp_generated'] = None
         st.session_state['temp_topic'] = ""
         st.session_state['temp_template_id'] = ""
-        #st.session_state['page'] = "content list"
         st.success("Content saved!")
         st.rerun()
+def get_template_types():
+    conn = common.get_conn()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM template_type ORDER BY name")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+def get_templates_by_type(type_id):
+    conn = common.get_row_conn()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, template_title, data_json
+        FROM templates_form
+        WHERE template_type = ?
+        ORDER BY template_title
+    """, (type_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
 
 def admin_generate_casestudy_content_page(user_id):
     conn = common.get_conn()
     cursor = conn.cursor()
-    st.header("Generate Content")
-    #st.markdown(f"Use your {st.session_state.get('page', 'Dashboard')}")
+    st.header("Generate Content (Admin)")
     topic = st.text_area("Enter Topic")
+    template_types = get_template_types()
+    type_map = {row[1]: row[0] for row in template_types}
+    type_names = list(type_map.keys())
+    selected_type_name = st.selectbox(
+        "Template Type",
+        ["-- Select Type --"] + type_names
+    )
+    # --- Template Dropdown (Dependent) ---
+    if selected_type_name != "-- Select Type --":
+        selected_type_id = type_map[selected_type_name]
+        st.markdown(f"**Selected Type ID:** {selected_type_id}")
+        templates = get_templates_by_type(selected_type_id)
+        if templates:
+            template_map = {row['template_title']: (row['id'], row['data_json']) for row in templates}
+            template_names = list(template_map.keys())
+            template_select = st.selectbox(
+                "Template",
+                ["-- Select Template --"] + template_names
+            )
+            if template_select != "-- Select Template --":
+                st.success(f"Selected Template: {template_select}")
+                selected_template_id, selected_template_json = template_map[template_select]
+        else:
+            st.warning("No templates found for this type.")
 
-    cursor.execute("SELECT id, template_title FROM templates_form WHERE user_id=?", (user_id,))
-    templates = cursor.fetchall()
-
-    template_select = st.selectbox("Choose Template", templates, format_func=lambda x: x[1])
-
-    #st.session_state['bit'] = 0
     if 'bit' not in st.session_state:
         st.session_state['bit'] = 0
     bit = st.session_state['bit']
-    #st.markdown(f"---{bit}---")
-    if st.button("Generate") :
+    if st.button("Generate") and selected_template_json is not None:
         with st.spinner("⏳ Generating content..."):
-            template_id = template_select[0]
-
-            cursor.execute("SELECT * FROM templates_form WHERE id=?", (template_id,))
-            t = cursor.fetchone()
-            # st.json(t[5])
-            # st.stop()
-            template_json = t[5]
-
-            #st.subheader("Template (JSON View)")
-            #st.markdown(json_to_html(template_json), unsafe_allow_html=True)
-            #st.stop()
-            #generated = generate_content(topic, template_json)
+            template_json = selected_template_json
+            template_id = selected_template_id
             generated = crew_casestudy.generate_blog(topic=topic,template_sections=template_json)
-            #st.json(generated)
-            #st.stop()
-            st.success("Case study generated successfully!")
+            st.success(f"{template_select} generated successfully!")
             st.session_state["temp_generated"] = generated
             st.session_state["temp_topic"] = topic
             st.session_state["temp_template_id"] = template_id
-
-            # for section, content in generated.items():
-            #     with st.expander(section.title(), expanded=True):
-            #         st.write(content)
-
             st.download_button(
                 "⬇ Download Blog JSON",
                 json.dumps(generated, indent=2),
                 file_name="blog_output.json",
                 mime="application/json"
             )
-            #blog_json = json.loads(generated)
-            #generated = '[{"section":"Meta Information","fields":{"SEO Title":"India Travel Guide for Business Leaders: Essential Tips & Insights","Slug":"india-travel-guide-business-leaders","SEO Description":"Comprehensive India travel guide tailored for business leaders. Discover visa info, cultural etiquette, key hubs, safety tips, and logistics for successful corporate trips.","Primary Keywords":"India travel guide, Business travel India, India travel tips for executives, India corporate travel guide, India business destination guide, Travel India for business leaders, India business trip planning, India travel essentials for entrepreneurs, Corporate travel India guide","Secondary Keywords":"Best places to visit in India for business travelers, India travel safety for business professionals, India business etiquette and culture, Airport guide India (delhi, mumbai, bengaluru), India visa information for business travelers, India business events and conferences, Hotel recommendations for business travelers in India, Transportation options in India for executives, India travel logistics for entrepreneurs, How to prepare for a business trip to India"}},{"section":"Header","fields":{"Main Headline":"Your Ultimate India Travel Guide for Business Leaders","Subheadline":"Navigate India’s corporate landscape with expert insights on travel, culture, and logistics","Hero Image URL":"https://example.com/images/india-business-travel-hero.jpg"}},{"section":"Introduction","fields":{"Hook sentence":"Planning a business trip to India? Get equipped with everything you need to succeed.","Context":"India is rapidly emerging as a global business hub, with thriving technology, finance, and government sectors attracting entrepreneurs and executives from around the world.","Why this topic matters":"For business leaders, understanding India’s unique travel requirements, cultural nuances, and logistical landscape is essential to maximize productivity and build strong professional partnerships.","Learning outcome":"By the end of this guide, you’ll be fully prepared to plan your India business trip, navigate cultural etiquette, choose optimal business hubs and accommodations, and maintain safety and comfort throughout your journey."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Visa and Travel Essentials for Business Professionals","Explanation paragraph":"Securing the appropriate visa and preparing thoroughly for your trip are crucial first steps for smooth business travel to India. Knowing your visa options, understanding health advisories, and meeting insurance requirements will help you avoid delays and complications.","Bullets":["Apply for the e-Business Visa, which allows multiple entries over a one-year period for short business trips.","Ensure your passport remains valid for at least six months beyond your intended entry date.","Consult a healthcare provider for recommended vaccinations and carry any necessary prescriptions.","Purchase comprehensive travel insurance that covers health issues and travel disruptions.","Keep both digital and physical copies of important documents, including your visa, passport, and insurance."],"Example":"For instance, an entrepreneur attending multiple conferences in Mumbai and Bengaluru within six months can benefit from the e-Business Visa’s flexibility, eliminating the need for repeated visa applications."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Navigating India’s Business Hubs and Transportation","Explanation paragraph":"India’s major business centers each offer distinct advantages and transportation options, enabling efficient travel and productive business operations.","Bullets":["Mumbai: The financial capital of India, hosting major stock exchanges (BSE & NSE) and numerous corporate headquarters.","Bengaluru: Known as India’s tech hub, with a vibrant startup ecosystem and plenty of co-working spaces.","Delhi NCR: The political and administrative center, home to many government offices and multinational corporations.","Use metro systems in Delhi and Bengaluru for efficient urban travel during peak hours.","Rely on trusted ride-hailing services like Ola and Uber for convenient, app-based transportation.","Major airports such as Indira Gandhi International (Delhi), Chhatrapati Shivaji Maharaj (Mumbai), and Kempegowda (Bengaluru) feature business lounges and offer direct international connections."],"Example":"A business leader arriving at Mumbai airport can quickly take a pre-booked Uber to a downtown meeting, then use the local metro system to navigate the city efficiently while avoiding traffic congestion."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Cultural Etiquette and Business Practices in India","Explanation paragraph":"Respecting India’s cultural nuances and business etiquette is vital for smooth communication and building lasting professional relationships.","Bullets":["Address senior executives with proper titles and surnames, such as Mr., Ms., or Dr., to show respect.","Expect indirect communication styles; carefully interpret politeness and pauses during discussions.","Recognize hierarchical decision-making structures; exercise patience during negotiations.","Dress formally and conservatively for business meetings.","Avoid sensitive topics such as politics or religion in conversations.","Be punctual but prepared for minor delays; flexibility helps maintain positive relationships."],"Example":"At a pitch meeting in Delhi, using formal titles and attentively observing subtle cues helped a founder earn trust and successfully secure a partnership."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Safety Tips and Health Considerations for Business Travel","Explanation paragraph":"While India is generally safe for business travelers, staying vigilant and well-prepared can significantly enhance your security and overall experience.","Bullets":["Stay alert in crowded areas, especially in major cities ranked mid-level on the Global Peace Index 2023.","Use hotel safes for valuables and avoid openly displaying expensive electronics or jewelry in public.","Drink only bottled or filtered water; avoid street food unless trusted sources recommend it.","Review travel advisories before and during your trip.","Keep emergency contacts and local embassy information readily accessible.","Carry a basic medical kit and familiarize yourself with nearby hospital options."],"Example":"An executive staying in Bengaluru chose a hotel near the tech park and booked airport transfers through the hotel to avoid unvetted taxis, ensuring smooth and secure transportation."}},{"section":"Main Sections","fields":{"H2: Key Insight":"Optimizing Your Business Trip: Accommodation and Networking Opportunities","Explanation paragraph":"Selecting suitable accommodations and actively engaging in networking events enhance both comfort and business growth during your trip.","Bullets":["Choose hotels offering business amenities, such as meeting rooms, reliable Wi-Fi, and executive lounges.","Consider properties located near key business districts like BKC in Mumbai or Whitefield in Bengaluru.","Utilize co-working spaces for flexible meeting venues and collaboration opportunities.","Attend major industry conferences and business events scheduled during your visit.","Plan meetings within India’s workweek (Monday to Friday), avoiding local holidays.","Use hotel concierge services to arrange local business support or transportation."],"Example":"An entrepreneur staying at the Hilton Mumbai International Airport hotel gained convenient access to conferences and networking lounges, boosting daily productivity."}},{"section":"Conclusion","fields":{"Summary":"India presents dynamic opportunities for business leaders, with thriving hubs, rich culture, and expanding infrastructure. Thoughtful preparation—including visa arrangements, travel logistics, cultural understanding, and safety practices—ensures every business trip is successful and productive.","Action steps":"Begin by applying for the correct visa well in advance, book accommodations close to your business hubs, familiarize yourself with local cultural norms, and plan your transportation ahead. Keep safety top of mind and leverage networking events to broaden your professional connections.","Final takeaway":"With the right planning and approach, your business journey to India can unlock valuable partnerships and lead to lasting success."}},{"section":"CTA","fields":{"Primary CTA":"Download Our India Business Travel Checklist Now","Secondary CTA":"Subscribe for Weekly Business Travel Tips and Updates"}}]'
-            # print(json.dumps(generated, indent=2))
-            # st.json(generated)
-
-            # blog_json = generated
-            # # if isinstance(blog_json, str):
-            # #     blog_json = json.loads(blog_json)
-            # # if isinstance(blog_json, list):
-            # #     if len(blog_json) > 0 and isinstance(blog_json[0], dict):
-            # #         blog_json = blog_json[0]
-            # #     else:
-            # #         st.error("Invalid blog JSON structure")
-            # #         return
-            # if isinstance(blog_json, str):
-            #     blog_json = json.loads(blog_json)
-            # st.subheader("📄 HTML Preview")
-
-            # st.markdown(blog_json_to_html(blog_json), unsafe_allow_html=True)
-
-            # st.subheader("📝 Markdown Output")
-            # st.code(blog_json_to_markdown(blog_json), language="markdown")
-            # st.stop()
-            # st.subheader("Generated Content")
-            # st.markdown(generated)
 
             st.session_state['bit'] = 2
-    #st.markdown(f"### Generated Content Preview-- {st.session_state['temp_generated']}")
-    #st.json(st.session_state['temp_generated'])
     if "temp_generated" in st.session_state and st.session_state['temp_generated'] not in [None, ""]:
         st.markdown("### Generated Content Preview")
         topic = st.session_state.get("temp_topic", "")
@@ -1101,8 +845,6 @@ def admin_generate_casestudy_content_page(user_id):
             with st.expander(section.title(), expanded=True):
                 st.write(content)
     if "temp_generated" in st.session_state and st.session_state['temp_generated'] not in [None, ""] and st.button("Save Content"):
-    #if st.button("Save Content"):
-        #topic = st.session_state["temp_topic"]
         topic = st.session_state.get("temp_topic", "None")
         temp_template_id = st.session_state.get("temp_template_id", "1")
         clean_template = sanitize_for_json(st.session_state['temp_generated'])
@@ -1118,7 +860,6 @@ def admin_generate_casestudy_content_page(user_id):
         st.session_state['temp_generated'] = None
         st.session_state['temp_topic'] = ""
         st.session_state['temp_template_id'] = ""
-        #st.session_state['page'] = "content list"
         st.success("Content saved!")
         st.rerun()
 

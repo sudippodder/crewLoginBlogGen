@@ -216,10 +216,21 @@ def content_page(user_id):
 # ----------------------------
 # GENERATE CONTENT PAGE
 # ----------------------------
+
 def generate_content_page(user_id):
     st.header("Generate Content")
 
     topic = st.text_input("Enter Topic")
+
+    template_types = get_template_types()
+
+    type_map = {row["name"]: row["id"] for row in template_types}
+    type_names = list(type_map.keys())
+
+    selected_type_name = st.selectbox(
+        "Template Type",
+        ["-- Select Type --"] + type_names
+    )
 
     cursor.execute("SELECT id, template_title FROM templates WHERE user_id=?", (user_id,))
     templates = cursor.fetchall()

@@ -49,17 +49,17 @@ def main():
     params = st.session_state['params'] if 'params' in st.session_state else {}
     subpage = params.get("subpage", "") if "subpage" in params else ""
     template_type_id = params.get("template_id", "") if "template_id" in params else ""
+
     qs = st.query_params
     edit_id = qs.get("id")
     st.write("---")
-    st.title("📋 Case Study Template List")
+    st.title("📋 Success Story Template List")
     col1, col2, col3 = st.columns([2, 1, 6])
     with col1:
         if st.button("➕ Create New Template"):
             st.session_state["params"]["current_page"] = "template_type"
             st.session_state["params"]["page"] = "template type"
-            st.session_state["params"]["subpage"] = "casestudy_form"
-            #st.session_state["params"]["template_id"] = ""
+            st.session_state["params"]["subpage"] = "successstory_form"
             st.session_state["params"]["template_frm_id"] = ""
             st.rerun()
     with col2:
@@ -68,13 +68,16 @@ def main():
             st.session_state["params"]["page"] = "template type"
             st.session_state["params"]["subpage"] = ""
             st.rerun()
+
     rows = conn.execute("""
         SELECT id, template_title, use_case, version
         FROM templates_form where template_type=? and user_id=?
         ORDER BY id DESC
     """, (template_type_id, user_id)).fetchall()
+
     if rows:
         h1, h2, h3, h4, h5 = st.columns([3, 4, 2, 1, 1])
+
         h1.markdown("**Title**")
         h2.markdown("**Use Case**")
         h3.markdown("**Version**")
@@ -82,8 +85,10 @@ def main():
         h5.markdown("**Delete**")
         for tid, title, use_case, version in rows:
             c1, c2, c3, c4, c5 = st.columns([3,4,2,1,1])
+
             c1.write(title)
             c2.write(version)
+
             if c3.button("📄 Clone", key=f"clone_{tid}"):
                 clone_template(tid, user_id)
                 st.success(f"Template '{title}' cloned!")
@@ -91,9 +96,10 @@ def main():
             if c4.button("✏ Edit", key=f"edit_{tid}"):
                 st.session_state["params"]["current_page"] = "template_type"
                 st.session_state["params"]["page"] = "template type"
-                st.session_state["params"]["subpage"] = "casestudy_form"
+                st.session_state["params"]["subpage"] = "successstory_form"
                 st.session_state["params"]["template_frm_id"] = tid
                 st.rerun()
+
             if c5.button("🗑 Delete", key=f"del_{tid}"):
                 conn.execute("DELETE FROM templates_form WHERE id=?", (tid,))
                 cur.commit()

@@ -14,21 +14,20 @@ from dotenv import load_dotenv
 import micro_humanizer_generator
 import common
 import sqlite
-#from streamlit_cookies_manager import EncryptedCookieManager
 from streamlit_cookies_manager import CookieManager
 import humanize_convert
 import template_type
 import template_list
+import success_story_template_list
 import template_casestudy_form
+import template_successstory_form
 import template_generate
 ENCRYPTION_PASSWORD = "your_strong_secret_key_here"
 # Key under which the user data will be stored in the cookie
 USER_COOKIE_KEY = "user_session_data"
 # Expiry time (in days) for the persistent login
 COOKIE_EXPIRY_DAYS = 30
-#st.markdown(f"{st.session_state}")
 
-#cookies = EncryptedCookieManager(prefix="myapp", password="adminapp123")
 cookies = CookieManager()
 
 if not cookies.ready():
@@ -38,9 +37,6 @@ if not cookies.ready():
 # --- Configuration ---
 load_dotenv()
 # AUTO-LOGIN using cookie
-# if cookies.get("auth_user"):
-#     st.session_state.logged_in = True
-#     st.session_state.username = cookies.get("auth_user")
 
 DATABASE_FILE = os.getenv("DATABASE_FILE")
 SESSION_FILE = os.getenv("SESSION_FILE") # File to store persistent login data
@@ -304,44 +300,9 @@ def save_session_state(user_info):
         # st.error is better than print in Streamlit for user feedback
         st.error(f"Error saving session state to cookie: {e}")
 
-
-#     """Stores user info in Streamlit's per-user session state."""
-#     # Use st.session_state to store data unique to the current user's session
-# #     {"id": 2,
-# # "username": "sudip",
-# # "email": "sudip@gmail.com",
-# # "full_name": "sudip",
-# # "role": "user"}
-#     #st.session_state['logged_in'] = True
-#     st.session_state['id'] = user_info.get('id')
-#     st.session_state['username'] = user_info.get('username')
-#     st.session_state['email'] = user_info.get('email')
-#     st.session_state['full_name'] = user_info.get('full_name')
-#     st.session_state['role'] = user_info.get('role')
-# def save_session_state(user_info):
-#     """Saves user information to a file for persistent login."""
-#     try:
-#         # User info is now a dictionary, including 'id'
-#         with open(SESSION_FILE, 'w') as f:
-#             json.dump(user_info, f)
-#     except Exception as e:
-#         print(f"Error saving session state: {e}")
-# def load_session_state():
-#     """Retrieves user info from the current session state."""
-#     if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
-#         return {}
-#     return {
-#         'id': st.session_state.get('id', False),
-#         'username': st.session_state.get('username', None),
-#         'email': st.session_state.get('email', None),
-#         'full_name': st.session_state.get('full_name', None),
-#         'role': st.session_state.get('role', None),
-#     }
-
 def load_session_state():
     """Loads user information from the cookie."""
     try:
-        #user_info_json = cookies.get(USER_COOKIE_KEY)
         user_info_json = cookies.get("auth_user")
 
         # Check if cookie exists and is not empty
@@ -360,35 +321,10 @@ def load_session_state():
 
 def clear_session_state():
     """Clears the persistent session file."""
-    # try:
-    #     # Check if cookie exists and delete it
-    #     if USER_COOKIE_KEY in cookies:
-    #         del cookies[USER_COOKIE_KEY]
-    #         cookies.save()
-    # except Exception as e:
-    #     st.error(f"Error clearing session state from cookie: {e}")
-
     # Clear all session state keys
     keys_to_delete = list(st.session_state.keys())
     for key in keys_to_delete:
         del st.session_state[key]
-
-# def load_session_state():
-#     """Loads user information from a file if it exists."""
-#     if os.path.exists(SESSION_FILE):
-#         try:
-#             with open(SESSION_FILE, 'r') as f:
-#                 return json.load(f)
-#         except Exception as e:
-#             # File might be corrupted or empty
-#             print(f"Error loading session state: {e}")
-#             os.remove(SESSION_FILE) # Clear corrupted file
-#     return None
-
-
-    #st.rerun()
-    # if os.path.exists(SESSION_FILE):
-    #     os.remove(SESSION_FILE)
 
 # --- Session State Management and Initialization ---
 
@@ -396,8 +332,6 @@ def initialize_session_state():
     """Initializes necessary session state variables and checks for default admin and persistent session."""
 
     # 1. Check for persistent login file first
-    #persistent_info = load_session_state()
-    #ca = cookies.get("auth_user")
     user_info_json = cookies.get("auth_user")
     persistent_info = {}
     if user_info_json:
@@ -416,7 +350,6 @@ def initialize_session_state():
     if 'page' not in st.session_state:
         # Default page is login if not logged in, otherwise dashboard
         st.session_state['page'] = 'login' if not st.session_state['logged_in'] else 'dashboard'
-    #st.json( st.session_state)
     # 3. Check for demo admin user
     if not verify_credentials(ADMIN_USER, "adminpass"):
         if add_user(ADMIN_USER, "adminpass", "admin@example.com", "System Admin", "admin"):
@@ -427,17 +360,10 @@ def initialize_session_state():
 def login_user(username, password, remember=False):
     """Handles the login process."""
     user_info = verify_credentials(username, password)
-    # st.json(user_info)
-    # st.markdown(f"{user_info['id']}")
-    # st.stop()
     if user_info:
         st.session_state['logged_in'] = True
         st.session_state['user_info'] = user_info
         st.session_state['page'] = 'dashboard'
-
-        # Save state to file for persistence across browser refreshes
-        #save_session_state(user_info)
-        # set cookie
 
         if remember:
             st.session_state["remember_login"] = True
@@ -539,24 +465,6 @@ def show_dashboard():
 
     st.markdown("---")
 
-    # Custom dashboard content
-    # col1, col2, col3 = st.columns(3)
-    # with col1:
-    #     st.metric("Total Tasks", "12", "-2 overdue")
-    # with col2:
-    #     st.metric("Team Members", "4", "New")
-    # with col3:
-    #     # Use the stored user ID (user['id']) for reference
-    #     st.metric("Your User ID", f"{user['id']}", "")
-
-    # st.subheader("Recent Activity")
-    # activity_data = {
-    #     'Time': ['10:30 AM', '09:15 AM', 'Yesterday'],
-    #     'Event': ['Updated project roadmap', 'Created new task: "Fix bug"', 'Logged out'],
-    #     'Status': ['Completed', 'In Progress', 'System']
-    # }
-    # st.table(activity_data)
-
 
 def show_profile():
     """Renders the user profile page."""
@@ -632,13 +540,9 @@ def show_post_content():
     user = st.session_state['user_info']
     user_id = user['id']
     username = user['username']
-
-
-    #st.header(f"Create and View Your Content ({username})", divider='orange')
     left, right = st.columns([8, 2])
     with left:
         st.title("✍️ Generate Content with Tones")
-    #left.header(f"View Your Tones ({username})")  # optional text
     with right:
         if st.button("List", type="primary"):
             st.session_state['spage'] = ''
@@ -664,7 +568,6 @@ def show_post_content():
     This multi-agent system can be used anywhere content needs to be created, refined, and published regularly. Some examples include: SEO-friendly blogs and articles, generating social media posts, newsletters, campaign content , product descriptions, guides, promotional blogs, newsletters, announcements, reports.
     """, unsafe_allow_html=True)
     st.markdown("---")
-    #st.markdown(generatecontent.__file__)
     # --- GENERATE BUTTON ---
     generatecontent.generate_content_page()
     # --- Post Creation Form ---
@@ -763,56 +666,23 @@ def show_tone_page():
     user = st.session_state['user_info']
     user_id = user['id']
     username = user['username']
-
-    #left, right = st.columns([8, 2])
     left,middle, right = st.columns([6,2, 2])
     with left:
         st.title("✍️ My Tones")
-    #left.header(f"View Your Tones ({username})")  # optional text
     with middle:
         if st.button("Tones", type="primary"):
-            #common.navigate_to("addtone")
             st.session_state['spage'] = 'tonelist'
             st.rerun()
     with right:
         if st.button("Create Tone", type="primary"):
-            #common.navigate_to("addtone")
             st.session_state['spage'] = 'addtone'
             st.rerun()
-        #st.session_state['page'] = 'addtone'
-        #st.rerun()
-        #common.navigate_to("addtone")
-        #st.session_state['page'] = 'addtone'
-    # --- Post Creation Form ---
-    # with st.expander("➕ Create New Post", expanded=True):
-    #     with st.form("new_post_form", clear_on_submit=True):
-    #         post_title = st.text_input("Post Title (Required)", max_chars=100)
-    #         post_content = st.text_area("Post Content (Required)", height=150)
-
-    #         submit_button = st.form_submit_button("Publish Post", type="primary")
-
-    #         if submit_button:
-    #             if post_title and post_content:
-    #                 if add_post(user_id, post_title, post_content):
-    #                     st.success("Post published successfully!")
-    #                     # Rerun to refresh the list of posts below
-    #                     st.rerun()
-    #                 else:
-    #                     st.error("Could not publish post. Please try again.")
-    #             else:
-    #                 st.warning("Both title and content are required to publish a post.")
-
     st.markdown("---")
 
     # --- Post Viewing Section ---
     st.subheader("📝 Tone List")
 
     user_tones = get_tones_by_user(user_id)
-    #st.json(user_tones)
-
-    # selected_tones = common.get_selected_tones_by_user(user_id)
-    # st.json(selected_tones)
-    #generated_json (7) created_at	is_active	user_id
     if user_tones:
         for tone in user_tones:
             tone_id = tone[0]
@@ -847,8 +717,6 @@ def show_tone_list_page():
     user = st.session_state['user_info']
     user_id = user['id']
     username = user['username']
-
-    #left, right = st.columns([8, 2])
     left, right = st.columns([8, 2])
     with left:
         st.title("✍️ Tones")
@@ -862,10 +730,8 @@ def show_tone_list_page():
     st.markdown("---")
 
     # --- Post Viewing Section ---
-    #st.subheader("📝 Tone List")
     st.header("➕ Add New Tone")
     name = st.text_input("Name")
-    #email = st.text_input("Email")
     email = ''
     if st.button("Insert Tone"):
         if name:
@@ -873,70 +739,30 @@ def show_tone_list_page():
             st.success("Tone inserted successfully!")
         else:
             st.error("Please fill all fields")
-
     # Show All Tones
     st.header("📋 All Tones")
     Tones = common.get_custom_tone(user_id)
-
     for row in Tones:
         tone_id, uname, uemail, active = row
 
         with st.expander(f"{uname} ({'Active' if active else 'Inactive'})"):
             new_name = st.text_input("Name", value=uname, key=f"name_{tone_id}")
-            #new_email = st.text_input("Email", value=uemail, key=f"email_{tone_id}")
-
             col1, col2, col3 = st.columns(3)
             new_email = ''
             # Update Button
             if col1.button("Update", key=f"update_{tone_id}"):
                 common.update_custom_tone(tone_id, new_name, new_email)
                 st.success("Tone updated!")
-
             # Toggle Active Button
             if col2.button("Toggle Active", key=f"toggle_{tone_id}"):
                 common.toggle_active_custom_tone(tone_id, active)
                 st.info("Status updated!")
-
             # Delete Button
             if col3.button("Delete", key=f"delete_{tone_id}"):
                 common.delete_custom_tone(tone_id)
                 st.error("Tone deleted!")
 
     st.write("Refresh page to view updated records.")
-
-    # user_tones = get_tones_by_user(user_id)
-    # #st.json(user_tones)
-
-    # if user_tones:
-    #     for tone in user_tones:
-    #         tone_id = tone[0]
-    #         is_active = tone[9] if len(tone) > 9 else 0
-    #         with st.container():
-    #             col1, col2 = st.columns([0.1, 0.9])
-    #             active_checkbox = col1.checkbox(
-    #                 "Active",
-    #                 value=bool(is_active),
-    #                 key=f"active_{tone_id}"
-    #             )
-    #             if active_checkbox != bool(is_active):
-    #                 update_tone_active(tone_id, int(active_checkbox))
-    #                 st.toast(f"Updated: {tone[1]}")  # Small popup notification
-    #                 st.rerun()  # Refresh UI
-
-    #             col2.markdown(f"""
-    #                 <div style="border: 1px solid #ffcc80; padding: 15px; margin-bottom: 15px; border-radius: 8px; background-color: #fff3e0;">
-    #                     <h4 style="margin-top: 0; color: #e65100;">{tone[1]}</h4>
-    #                     <p style="font-size: 0.9em; color: #666; font-style: italic;">
-    #                         Posted by {tone[10]} on {tone[8].split('.')[0]}
-    #                     </p>
-    #                     <p>{show_micro_humanizer_content(tone[7])}</p>
-    #                 </div>
-    #             """, unsafe_allow_html=True)
-    # else:
-    #     st.info("You haven't published any posts yet. Use the form above to create your first one!")
-
-
-
 
 def delete_content(content_id, user_id):
     """Deletes a content entry from the content_history table for a specific user."""
@@ -959,24 +785,16 @@ def list_gen_content():
     user = st.session_state['user_info']
     user_id = user['id']
     username = user['username']
-
-    #query_params = st.query_params
-    #st.markdown(f"Mode: {query_params.get('mode')}")
-
     left, right = st.columns([8, 2])
     with left:
         st.title("✍️ My Generated Content List")
-    #left.header(f"View Your Tones ({username})")  # optional text
     with right:
         if st.button("Generate Content", type="primary"):
-            #common.navigate_to("gencontent")
             st.session_state['page'] = 'content'
             st.session_state['spage'] = 'gencontent'
             st.session_state.detection_result = ''
             st.session_state['content_id'] = ''
             st.rerun()
-            #common.navigate_to("gencontent")
-
 
     st.markdown("---")
 
@@ -984,13 +802,6 @@ def list_gen_content():
     st.subheader("📝 Content List")
 
     user_content = common.get_content_by_user(user_id)
-    #st.json(user_tones)
-
-    # selected_tones = common.get_selected_tones_by_user(user_id)
-    # st.json(selected_tones)
-    #generated_json (7) created_at	is_active	user_id
-
-
     if user_content:
         for content_item in user_content:
             content_id = content_item[0]
@@ -1038,7 +849,6 @@ def handle_delete_content(content_id, user_id):
     st.rerun()
 # --- Main Application Layout and Routing ---
 def show_micro_humanizer_content(role_json):
-    #st.json(role_json)
     if isinstance(role_json, str):
         try:
             role_json = json.loads(role_json)
@@ -1057,36 +867,18 @@ def show_micro_humanizer_content(role_json):
 def main():
     """Main function to run the Streamlit app."""
 
-
-
-    # st.json(st.session_state)
-    # st.stop()
-    # if 'user_info' not in st.session_state:
-    #     st.session_state['user_info'] = None
-    #     st.session_state['logged_in'] = False
-    #     st.rerun()
-
-
     st.set_page_config(
         page_title="Streamlit Auth Demo",
         layout="wide",
         initial_sidebar_state="expanded"
     )
     upage = None
-    #st.json(st.session_state)
     # 1. Database and State Initialization
     init_db()
     # Now includes checking for persistent session file
     initialize_session_state()
-    #st.json(st.session_state)
-    # 2. Sidebar/Navigation
-    #st.json(st.session_state)
-    # ca = cookies.get("auth_user")
-    # st.markdown(f"{ca} -- ")
-    #st.json(st.session_state)
     with st.sidebar:
         st.header("App Navigation")
-        #st.json(st.session_state)
         if "logged_in" in st.session_state and st.session_state["logged_in"] == True:
             if "params" not in st.session_state:
                 st.session_state.params = {}
@@ -1095,74 +887,49 @@ def main():
             st.success(f"Logged in as: {user['username']}")
 
             params = st.session_state['params'] if 'params' in st.session_state else {}
-            #paramcat = params.get("template_id", "")
             subpage = params.get("subpage", "") if "subpage" in params else ""
             template_id = params.get("template_id", "") if "template_id" in params else ""
-            #st.markdown(f"Use your {st.session_state.get('page', 'Dashboard')}")
-            #st.json(params)
 
             # --- Navigation buttons ---
             st.markdown("### User Pages")
 
             # Added 'Posts' to the list of pages
-            #user_pages = ['Dashboard', 'Profile', 'Posts', 'Content', 'Tone']
             if user['role'] == 'admin':
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'Humanize','Template','Generate Content','Template Contents','DB','Template Type','Content Generator','Content List']
-                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List']
+                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List','DB']
             else:
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content','Content Generator','Content List']
                 user_pages = ['Dashboard', 'Profile', 'Content Generator','Content List']
             #,'DB'
-            # Determine the correct index for the current page
-            # template_id = st.query_params.get("template_id", "")
-            # if template_id not in [None, ""]:
-            #     template_id = st.session_state['template_id'] if 'template_id' in st.session_state else template_id
             current_page_param = st.query_params.get("current_page", "")
-
-            #subpage = st.session_state['subpage'] if 'subpage' in st.session_state else None
-
-            #st.markdown(f"{current_page_param}")
             if current_page_param == "template_type":
                 current_page =  "Template Type"
                 st.query_params.clear()
             else:
                 current_page = st.session_state.get("page", "Dashboard")
-            #st.markdown(f"### Navigate to: {current_page}")
             try:
                 current_index = user_pages.index(current_page)
             except ValueError:
                 current_index = 0 # Default to Dashboard if page is unknown
-
-            #st.markdown(f"### Navigate to: {current_index}")
             if 'refresh' in query_params and query_params['refresh'].lower() == 'true':
                 current_index = 3
             # Use radio buttons for clear, responsive navigation selection
-            #st.markdown(f"### Navigate to: {current_index}")
             current_selection = st.radio(
                 "Go to:",
                 user_pages,
                 index=current_index,
                 key='nav_radio_user'
             )
-
             # Update page state based on radio button
-
-
             upage = st.query_params.get("page", None)
             if upage:
                 st.session_state['page'] = upage
                 if 'refresh' in query_params and query_params['refresh'].lower() == 'true' and 'id' in query_params:
                     st.session_state['spage'] = 'gencontent'
                     st.session_state['content_id'] = query_params['id']
-                #common.navigate_to("clear")
             else:
                 st.session_state['page'] = current_selection.lower()
 
-            #st.markdown(f"Navigating to: **{st.session_state['page']}**")
-
-
-            # pageSlug = current_selection.lower()
-            # common.navigate_to(pageSlug)
             # --- Admin Section (Role-based content) ---
             if user['role'] == 'admin':
                 st.markdown("### Admin Tools")
@@ -1170,7 +937,6 @@ def main():
                     st.session_state['page'] = 'admin'
 
             st.markdown("---")
-            #st.markdown(f"### Account Actions {cookies}")
             st.button("Logout", on_click=logout_user, use_container_width=True, type="primary", key="logout_btn")
 
         else:
@@ -1185,8 +951,6 @@ def main():
     if "logged_in" in st.session_state and st.session_state["logged_in"] == True:
         # Show the appropriate page based on the session state
         page = st.session_state['page']
-
-        #st.markdown(f"## Navigating to: {page} - {template_id}.", unsafe_allow_html=True)
         if page == 'dashboard':
             show_dashboard()
         elif page == 'profile':
@@ -1200,11 +964,8 @@ def main():
                 list_gen_content()
                  # NEW Page Routing
         elif upage == 'gencontent':
-            #st.markdown(f"## gencontent", unsafe_allow_html=True)
-                 # NEW Page Routing
             show_post_content()
         elif upage == 'addtone':
-            #st.markdown(f"## addtone", unsafe_allow_html=True)
             micro_humanizer_generator.default_view()
         elif page == 'tone':
             if 'spage' in st.session_state and st.session_state['spage'] == 'addtone':
@@ -1214,7 +975,6 @@ def main():
             else:
                 show_tone_page()     # NEW Page Routing
         elif page == 'db':
-
             sqlite.main()     # NEW Page Routing
         elif page == 'humanize':
             humanize_convert.show_post_content()
@@ -1222,21 +982,22 @@ def main():
             temp_app.template_page(user_id)
         elif page == 'generate content':
             temp_app.generate_content_page(user_id)
-
         elif page == 'template type':
             if subpage == "template_list":
                 template_list.main()
+            elif subpage == "successstory_template_list":
+                success_story_template_list.main()
             elif subpage == "template_form":
                 template_form.main()
             elif subpage == "casestudy_form":
                 template_casestudy_form.main()
+            elif subpage == "successstory_form":
+                template_successstory_form.main()
             else:
                 template_type.main()
         elif page == 'content generator':
-            #template_generate.generate_content_page(user_id)
             template_generate.generate_casestudy_content_page(user_id=user_id)
         elif page == 'admin content generator':
-            #template_generate.generate_content_page(user_id)
             template_generate.admin_generate_casestudy_content_page(user_id=user_id)
         elif page == 'template contents':
             temp_app.content_page(user_id)
@@ -1252,9 +1013,7 @@ def main():
         # Show login page if not logged in
         show_login_page()
 
-    #st.markdown(f"---{upage}")
-    # if upage:
-    #     st.query_params.clear()
+
 
 
 
