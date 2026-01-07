@@ -17,7 +17,7 @@ def main():
     edit_id = qs.get("id")
     st.write("---")
     # ---------- CATEGORY LIST ----------
-    cur.execute("SELECT id, name FROM template_type ORDER BY id DESC")
+    cur.execute("SELECT id, name FROM template_type ORDER BY id ASC")
     rows = cur.fetchall()
     st.subheader("Template Type")
     if "params" not in st.session_state:
