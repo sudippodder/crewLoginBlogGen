@@ -8,6 +8,7 @@ import json # Added for session persistence
 import os   # Added for file path management
 import generatecontent
 import temp_app
+import template_for_articles
 importlib.reload(generatecontent)
 import urllib.parse
 from dotenv import load_dotenv
@@ -19,8 +20,10 @@ import humanize_convert
 import template_type
 import template_list
 import success_story_template_list
+import template_for_articles
 import template_casestudy_form
 import template_successstory_form
+import template_article_form
 import template_generate
 ENCRYPTION_PASSWORD = "your_strong_secret_key_here"
 # Key under which the user data will be stored in the cookie
@@ -896,7 +899,7 @@ def main():
             # Added 'Posts' to the list of pages
             if user['role'] == 'admin':
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'Humanize','Template','Generate Content','Template Contents','DB','Template Type','Content Generator','Content List']
-                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List','DB']
+                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List']  #,'DB','Update Template Type'
             else:
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content','Content Generator','Content List']
                 user_pages = ['Dashboard', 'Profile', 'Content Generator','Content List']
@@ -951,6 +954,8 @@ def main():
     if "logged_in" in st.session_state and st.session_state["logged_in"] == True:
         # Show the appropriate page based on the session state
         page = st.session_state['page']
+        #st.markdown(f"---{subpage} and {page}---")
+
         if page == 'dashboard':
             show_dashboard()
         elif page == 'profile':
@@ -987,14 +992,22 @@ def main():
                 template_list.main()
             elif subpage == "successstory_template_list":
                 success_story_template_list.main()
+            elif subpage == "template_for_articles":
+                template_for_articles.main()
             elif subpage == "template_form":
                 template_form.main()
             elif subpage == "casestudy_form":
                 template_casestudy_form.main()
             elif subpage == "successstory_form":
                 template_successstory_form.main()
+            elif subpage == "article_form":
+                template_article_form.main()    
             else:
                 template_type.main()
+                #template_type.show_template_type()
+
+        elif page == 'update template type':
+            template_type.show_template_type()
         elif page == 'content generator':
             template_generate.generate_casestudy_content_page(user_id=user_id)
         elif page == 'admin content generator':
