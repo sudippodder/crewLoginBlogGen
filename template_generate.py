@@ -735,7 +735,7 @@ def generate_casestudy_content_page(user_id):
             st.session_state["temp_topic"] = topic
             st.session_state["temp_template_id"] = template_id
             st.download_button(
-                "⬇ Download Blog JSON",
+                "⬇ Download JSON",
                 json.dumps(generated, indent=2),
                 file_name="blog_output.json",
                 mime="application/json"
@@ -830,7 +830,7 @@ def admin_generate_casestudy_content_page(user_id):
             st.session_state["temp_topic"] = topic
             st.session_state["temp_template_id"] = template_id
             st.download_button(
-                "⬇ Download Blog JSON",
+                "⬇ Download JSON",
                 json.dumps(generated, indent=2),
                 file_name="blog_output.json",
                 mime="application/json"
