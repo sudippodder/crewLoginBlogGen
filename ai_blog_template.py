@@ -53,10 +53,10 @@ def main():
     qs = st.query_params
     edit_id = qs.get("id")
     st.write("---")
-    st.title("📋 Blog Template List")
+    st.title("📋 SEO Page List")
     col1, col2, col3 = st.columns([2, 1, 6])
     with col1:
-        if st.button("➕ Create New Blog Template"):
+        if st.button("➕ Create SEO Page Template"):
             st.session_state["params"]["current_page"] = "template_type"
             st.session_state["params"]["page"] = "template type"
             st.session_state["params"]["subpage"] = "ai_blog_form"

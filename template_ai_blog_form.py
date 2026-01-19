@@ -48,7 +48,7 @@ def main():
         ).fetchone()
         if row:
             existing = json.loads(row[3])
-    st.title("🧩 Blog Form")
+    st.title("🧩 SEO Page Form")
     if st.button("⬅ Back to List"):
         st.session_state["params"]["current_page"] = "template_type"
         st.session_state["params"]["page"] = "template type"

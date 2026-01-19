@@ -86,7 +86,7 @@ def main():
                 elif replace_title == "articles":
                     st.session_state["params"]["subpage"] = "template_for_articles"    
                     
-                elif replace_title == "blog":
+                elif replace_title == "seo_page":
                     st.session_state["params"]["subpage"] = "ai_blog_template"    
                     
                 else:
