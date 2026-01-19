@@ -22,7 +22,9 @@ import template_list
 import success_story_template_list
 import template_for_articles
 import template_casestudy_form
+import template_ai_blog_form
 import template_successstory_form
+import ai_blog_template
 import template_article_form
 import template_generate
 ENCRYPTION_PASSWORD = "your_strong_secret_key_here"
@@ -1000,8 +1002,12 @@ def main():
                 template_casestudy_form.main()
             elif subpage == "successstory_form":
                 template_successstory_form.main()
+            elif subpage == "ai_blog_template":
+                ai_blog_template.main()    
             elif subpage == "article_form":
-                template_article_form.main()    
+                template_article_form.main()  
+            elif subpage == "ai_blog_form":
+                template_ai_blog_form.main()    
             else:
                 template_type.main()
                 #template_type.show_template_type()

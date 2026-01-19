@@ -73,16 +73,21 @@ def main():
                 st.session_state["params"]["current_page"] = "template_type"
                 st.session_state["params"]["page"] = "template type"
                 lower_title = r[1].lower()
-                # st.markdown(f"---{lower_title}---")
+                replace_title = lower_title.replace(" ", "_")
+                # st.markdown(f"---{replace_title}---")
+                
                 # st.stop()
-                if r[1].lower() == "case study":
+                if replace_title == "case_study":
                     #st.session_state["params"]["subpage"] = "casestudy_form"
                     st.session_state["params"]["subpage"] = "template_list"
-                elif r[1].lower() == "success story":
+                elif replace_title == "success_story":
                     #st.session_state["params"]["subpage"] = "successstory_form"
                     st.session_state["params"]["subpage"] = "successstory_template_list"
-                elif r[1].lower() == "articles":
+                elif replace_title == "articles":
                     st.session_state["params"]["subpage"] = "template_for_articles"    
+                    
+                elif replace_title == "blog":
+                    st.session_state["params"]["subpage"] = "ai_blog_template"    
                     
                 else:
                     st.session_state["params"]["subpage"] = "template_list"
