@@ -181,11 +181,11 @@ def init_db():
     # page_title
     # slug
     # cslug
-    c.execute("""
-        ALTER TABLE template_type
-        ADD COLUMN page_title TEXT;
+    # c.execute("""
+    #     ALTER TABLE template_type
+    #     ADD COLUMN page_title TEXT;
         
-    """)
+    # """)
     conn.commit()
     conn.close()
 
