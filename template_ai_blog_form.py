@@ -35,7 +35,7 @@ def main():
     template_type_id = params.get("template_id", "") if "template_id" in params else ""
     template_frm_id = params.get("template_frm_id", "") if "template_frm_id" in params else ""
     #st.json(params)
-    # st.markdown(f"---{template_type_id}")
+    #st.markdown(f"---{template_type_id}")
     # st.markdown(f"---{template_frm_id}")
     template_id = template_frm_id
     c = sqlite3.connect(DATABASE_FILE)
@@ -235,7 +235,7 @@ def main():
             st.success("Template created")
 
         c.commit()
-        #st.session_state.page = "list"
+        
         st.session_state["params"]["current_page"] = "template_type"
         st.session_state["params"]["page"] = "template type"
         st.session_state["params"]["subpage"] = "ai_blog_template"

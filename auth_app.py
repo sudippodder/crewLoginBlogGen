@@ -25,7 +25,10 @@ import template_casestudy_form
 import template_ai_blog_form
 import template_successstory_form
 import ai_blog_template
+import ai_dpage_template
+import content_list_template_type
 import template_article_form
+import template_dpage_form
 import template_generate
 ENCRYPTION_PASSWORD = "your_strong_secret_key_here"
 # Key under which the user data will be stored in the cookie
@@ -176,8 +179,9 @@ def init_db():
         )
     """)
     # c.execute("""
-    #     ALTER TABLE templates_form
-    #     ADD COLUMN updated_at DATETIME;
+    #     ALTER TABLE template_type
+    #     ADD COLUMN file_name TEXT;
+        
     # """)
     conn.commit()
     conn.close()
@@ -1007,7 +1011,13 @@ def main():
             elif subpage == "article_form":
                 template_article_form.main()  
             elif subpage == "ai_blog_form":
-                template_ai_blog_form.main()    
+                template_ai_blog_form.main()  
+            ## NEW Page Routing    
+            elif subpage == "d_page":
+                ai_dpage_template.main()    
+            elif subpage == "d_form":
+                template_dpage_form.main()   
+            ## NEW Page Routing       
             else:
                 template_type.main()
                 #template_type.show_template_type()
@@ -1021,7 +1031,12 @@ def main():
         elif page == 'template contents':
             temp_app.content_page(user_id)
         elif page == 'content list':
-            temp_app.content_list(user_id)         # NEW Page Routing
+            #temp_app.content_list(user_id)         # NEW Page Routing
+            if subpage != "":
+                temp_app.content_list(user_id)
+            else:    
+                content_list_template_type.main()
+
         elif page == 'admin':
             show_admin_page()
         else:

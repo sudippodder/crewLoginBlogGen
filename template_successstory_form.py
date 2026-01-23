@@ -286,7 +286,7 @@ def main():
             st.success("Template created")
 
         c.commit()
-        #st.session_state.page = "list"
+        
         st.session_state["params"]["current_page"] = "template_type"
         st.session_state["params"]["page"] = "template type"
         st.session_state["params"]["subpage"] = "successstory_template_list"

@@ -231,3 +231,22 @@ def get_row_conn():
 
 def unescape_text(text):
     return bytes(text, "utf-8").decode("unicode_escape")
+
+
+def file_type_exist_check():
+    conn = get_row_conn()
+    c = conn.cursor()
+    # Join tones with users to get the username for display
+
+    c.execute("""
+        SELECT slug
+        FROM template_type 
+        ORDER BY id DESC
+    """)
+    
+    
+    #st.json(posts)
+    
+    
+
+    return [row[0] for row in c.fetchall()]

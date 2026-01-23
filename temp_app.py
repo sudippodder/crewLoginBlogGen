@@ -185,7 +185,7 @@ def template_page(user_id):
 # CONTENT CRUD PAGE
 # ----------------------------
 def content_page(user_id):
-    st.header("Generated Content List")
+    st.header("Generated Content List cp")
     conn = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
     cursor = conn.cursor()
 
@@ -227,85 +227,122 @@ def sanitize_for_json(obj):
     else:
         return obj
 
-
-def content_list(user_id):
-    st.header("Generated Content List")
-
+def get_templates_by_type(type_id):
+    conn = common.get_row_conn()
+    cursor = conn.cursor()
     cursor.execute("""
-        SELECT id, topic, generated_content
-        FROM contents
-        WHERE contents.user_id=?
-    """, (user_id,))
-
+        SELECT id, template_title, data_json
+        FROM templates_form
+        WHERE template_type = ?
+        ORDER BY template_title
+    """, (type_id,))
     rows = cursor.fetchall()
-    st.markdown("""
-<style>
-.rounded-card {
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid #e6e6e6;
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 16px;
-    background-color: #ffffff;
-}
-</style>
-""", unsafe_allow_html=True)
-    if rows:
-        for row in rows:
-            with st.container():
-                # st.markdown('<div class="rounded-card">', unsafe_allow_html=True)
-                id, topic, generated_content = row
-                # st.subheader("📄 Blog Content")
-                # st.write("This content stays inside main layout.")
-                # st.button("View", key="view_1")
-                # st.markdown('</div>', unsafe_allow_html=True)
+    conn.close()
+    return rows
+def content_list(user_id):
+    if st.button("Back"):
+        st.session_state["params"]["current_page"] = "content_list"
+        st.session_state["params"]["page"] = "content list"
+        st.session_state["params"]["subpage"] = ""
+        st.rerun()
+    st.header("Generated Content List ")
+    
+    #st.json(st.session_state["params"])
+    
+    st.write(f"### {st.session_state["params"]["template_name"]} ")
+    if st.session_state["params"]["template_id"] :
+        template_types = get_templates_by_type(st.session_state["params"]["template_id"])
+        type_map = {row[1]: row[0] for row in template_types}
+        type_names = list(type_map.keys())
+        selected_type_name = st.selectbox(
+            "Template Type",
+            ["-- Select Type --"] + type_names
+        )
+      
+    if selected_type_name !=  "-- Select Type --" :
+        selected_type_id = type_map[selected_type_name]
+        #st.markdown(f"{selected_type_id}")
+        cursor.execute("""
+            SELECT c.id, c.topic, c.generated_content, u.username, c.created_at
+            FROM contents as c left join users as u on  c.user_id=u.id
+            WHERE c.template_id=?
+        """, (selected_type_id,))
 
-                st.write(f"### {topic} ")
+        rows = cursor.fetchall()
+        st.markdown("""
+    <style>
+    .rounded-card {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #e6e6e6;
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 16px;
+        background-color: #ffffff;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+        if rows:
+            for row in rows:
+                with st.container():
+                    # st.markdown('<div class="rounded-card">', unsafe_allow_html=True)
+                    id, topic, generated_content, user_name, created_at = row
+                    # st.subheader("📄 Blog Content")
+                    # st.write("This content stays inside main layout.")
+                    # st.button("View", key="view_1")
+                    # st.markdown('</div>', unsafe_allow_html=True)
 
-                col1, col2 = st.columns([6, 1])
-                with col1:
-                    if st.button("View", key=f"view_{id}"):
-                        if generated_content:
-                            # clean_template = sanitize_for_json(generated_content)
-                            # json_string = json.dumps(clean_template, ensure_ascii=False)
-                            # generated_content = json.loads(json_string)
-                            try:
-                                generated_content = json.loads(generated_content)
-                            except json.JSONDecodeError as e:
-                                st.error("Stored template is corrupted.")
-                                print("JSON ERROR:", e)
-                                return
-                            for section, content in generated_content.items():
-                                with st.expander(section.title(), expanded=True):
-                                    #st.write(content)
-                                    content = common.unescape_text(content)
-                                    st.markdown(f"{content}", unsafe_allow_html=True)
-                            #st.markdown(template_dict)
-                        else:
-                            st.info("No generated content available.")
+                    st.write(f"### Created By : {user_name} ")
+                    datetime_object = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+                    created_date = datetime_object.strftime("%B %d, %Y")
+                    #created_date = created_at.strftime("%B %d, %Y")
+                    st.write(f"### Created At :  {created_date} ")
+                    st.write(f"### {topic} ")
 
-                with col2:
-                    if st.button("Delete", key=f"delete_{id}"):
-                        cursor.execute("DELETE FROM contents WHERE id=?", (id,))
-                        conn.commit()
-                        st.warning("Deleted successfully")
-                        st.rerun()
+                    col1, col2 = st.columns([6, 1])
+                    with col1:
+                        if st.button("View", key=f"view_{id}"):
+                            if generated_content:
+                                # clean_template = sanitize_for_json(generated_content)
+                                # json_string = json.dumps(clean_template, ensure_ascii=False)
+                                # generated_content = json.loads(json_string)
+                                try:
+                                    generated_content = json.loads(generated_content)
+                                except json.JSONDecodeError as e:
+                                    st.error("Stored template is corrupted.")
+                                    print("JSON ERROR:", e)
+                                    return
+                                for section, content in generated_content.items():
+                                    with st.expander(section.title(), expanded=True):
+                                        #st.write(content)
+                                        content = common.unescape_text(content)
+                                        st.markdown(f"{content}", unsafe_allow_html=True)
+                                #st.markdown(template_dict)
+                            else:
+                                st.info("No generated content available.")
+
+                    with col2:
+                        if st.button("Delete", key=f"delete_{id}"):
+                            cursor.execute("DELETE FROM contents WHERE id=?", (id,))
+                            conn.commit()
+                            st.warning("Deleted successfully")
+                            st.rerun()
 
 
 
-            st.divider()
-            #st.json(generated_content)
+                st.divider()
+                #st.json(generated_content)
 
 
+        else:
+            st.info("No content generated yet.")
     else:
-        st.info("No content generated yet.")
-
+        st.info("Please select template type.")    
 
 # ----------------------------
 # GENERATE CONTENT PAGE
 # ----------------------------
-def get_template_types():
+def get_template_types_by_id(template_id):
 
     cursor.execute("SELECT id, name FROM template_type ORDER BY name")
     rows = cursor.fetchall()
