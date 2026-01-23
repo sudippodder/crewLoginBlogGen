@@ -178,9 +178,12 @@ def init_db():
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # page_title
+    # slug
+    # cslug
     c.execute("""
         ALTER TABLE template_type
-        ADD COLUMN file_name TEXT;
+        ADD COLUMN page_title TEXT;
         
     """)
     conn.commit()
@@ -905,7 +908,7 @@ def main():
             # Added 'Posts' to the list of pages
             if user['role'] == 'admin':
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'Humanize','Template','Generate Content','Template Contents','DB','Template Type','Content Generator','Content List']
-                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List']  #,'DB','Update Template Type'
+                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List','DB','Update Template Type']  #,'DB','Update Template Type'
             else:
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content','Content Generator','Content List']
                 user_pages = ['Dashboard', 'Profile', 'Content Generator','Content List']
