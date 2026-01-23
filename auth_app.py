@@ -178,11 +178,11 @@ def init_db():
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    # c.execute("""
-    #     ALTER TABLE template_type
-    #     ADD COLUMN file_name TEXT;
+    c.execute("""
+        ALTER TABLE template_type
+        ADD COLUMN file_name TEXT;
         
-    # """)
+    """)
     conn.commit()
     conn.close()
 
