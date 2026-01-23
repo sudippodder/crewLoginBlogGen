@@ -249,7 +249,7 @@ def content_list(user_id):
     
     #st.json(st.session_state["params"])
     
-    st.write(f"### {st.session_state["params"]["template_name"]} ")
+    #st.write(f"### {st.session_state["params"]["template_name"]} ")
     if st.session_state["params"]["template_id"] :
         template_types = get_templates_by_type(st.session_state["params"]["template_id"])
         type_map = {row[1]: row[0] for row in template_types}
