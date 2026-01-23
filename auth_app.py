@@ -185,7 +185,7 @@ def init_db():
 
     c.execute("""
         ALTER TABLE template_type
-        ADD COLUMN page_title TEXT;
+        ADD COLUMN slug TEXT;
         
     """)
     conn.commit()
