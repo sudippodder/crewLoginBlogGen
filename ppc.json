@@ -1,0 +1,224 @@
+{
+  "Banner": {
+    "goal": "Create a strong first impression that communicates value instantly",
+    "structure": [
+      "Primary headline",
+      "Supporting subheadline"
+    ],
+    "writing_rules": {
+      "style": "Short, punchy, high-impact",
+      "voice": "Confident, premium",
+      "avoid": ["Buzzwords", "Fluff", "Technical jargon"],
+      "must_include": ["Clear value proposition"],
+      "format": "Plain text, no markdown"
+    },
+    "agents": {
+      "researcher": {
+        "role": "Banner Researcher",
+        "focus": "Brand positioning, messaging clarity"
+      },
+      "writer": {
+        "role": "Banner Copywriter",
+        "instruction": "Write concise, high-impact copy that hooks the reader"
+      },
+      "editor": {
+        "role": "Banner Editor",
+        "instruction": "Ensure clarity, brevity, and emotional impact"
+      }
+    },
+    "tone": "Confident, premium, engaging",
+    "word_limit": 40
+  },
+
+  "Services": {
+    "goal": "Optimize content for SEO and discoverability",
+    "structure": [
+      "SEO title",
+      "Meta description",
+      "Primary keyword",
+      "Secondary keywords"
+    ],
+    "writing_rules": {
+      "style": "SEO-focused, precise",
+      "voice": "Neutral, informative",
+      "avoid": ["Keyword stuffing", "Marketing hype"],
+      "must_include": ["Primary keyword"],
+      "format": "Plain text, comma-separated where needed"
+    },
+    "agents": {
+      "researcher": {
+        "role": "SEO Researcher",
+        "focus": "Search intent, keyword research"
+      },
+      "writer": {
+        "role": "SEO Metadata Writer",
+        "instruction": "Write optimized metadata aligned with search intent"
+      },
+      "editor": {
+        "role": "SEO Editor",
+        "instruction": "Validate keyword placement and length"
+      }
+    },
+    "tone": "Clear, keyword-focused",
+    "word_limit": 60
+  },
+
+  "Expert Resources": {
+    "goal": "Explain background and relevance of the topic",
+    "structure": [
+      "Industry or market background",
+      "Why this topic matters now",
+      "Who this is for"
+    ],
+    "writing_rules": {
+      "style": "Informative, structured",
+      "voice": "Professional",
+      "avoid": ["Vague statements", "Overpromising"],
+      "must_include": ["Context", "Relevance"],
+      "format": "Short paragraphs"
+    },
+    "agents": {
+      "researcher": {
+        "role": "Context Researcher",
+        "focus": "Industry trends, background information"
+      },
+      "writer": {
+        "role": "Context Writer",
+        "instruction": "Explain the context clearly for non-technical readers"
+      },
+      "editor": {
+        "role": "Context Editor",
+        "instruction": "Ensure logical flow and clarity"
+      }
+    },
+    "tone": "Professional, informative",
+    "word_limit": 120
+  },
+
+  "Client Outcomes": {
+    "goal": "Describe the project scope and objectives",
+    "structure": [
+      "Project overview",
+      "Objectives",
+      "Stakeholders involved"
+    ],
+    "writing_rules": {
+      "style": "Clear, structured",
+      "voice": "Client-focused",
+      "avoid": ["Internal jargon"],
+      "must_include": ["Objective clarity"],
+      "format": "Paragraphs with logical flow"
+    },
+    "agents": {
+      "researcher": {
+        "role": "Project Researcher",
+        "focus": "Project scope and goals"
+      },
+      "writer": {
+        "role": "Project Writer",
+        "instruction": "Describe the project in a structured manner"
+      },
+      "editor": {
+        "role": "Project Editor",
+        "instruction": "Improve readability and structure"
+      }
+    },
+    "tone": "Structured, client-focused",
+    "word_limit": 150
+  },
+
+  "Engagement And Trial Framing": {
+    "goal": "Highlight key problems and constraints",
+    "structure": [
+      "Core challenges",
+      "Constraints or risks",
+      "Impact of the problem"
+    ],
+    "writing_rules": {
+      "style": "Problem-focused",
+      "voice": "Realistic",
+      "avoid": ["Exaggeration"],
+      "must_include": ["Clear pain points"],
+      "format": "Direct, factual paragraphs"
+    },
+    "agents": {
+      "researcher": {
+        "role": "Challenge Analyst",
+        "focus": "Pain points, blockers"
+      },
+      "writer": {
+        "role": "Challenge Writer",
+        "instruction": "Clearly explain the challenges faced"
+      },
+      "editor": {
+        "role": "Challenge Editor",
+        "instruction": "Ensure accuracy and impact"
+      }
+    },
+    "tone": "Problem-focused, realistic",
+    "word_limit": 150
+  },
+
+  "Industries And Use Cases": {
+    "goal": "Explain how the challenges were solved",
+    "structure": [
+      "Approach",
+      "Key decisions",
+      "Implementation summary"
+    ],
+    "writing_rules": {
+      "style": "Solution-oriented",
+      "voice": "Confident",
+      "avoid": ["Over-technical explanations"],
+      "must_include": ["Clear problem-solution mapping"],
+      "format": "Logical step-by-step paragraphs"
+    },
+    "agents": {
+      "researcher": {
+        "role": "Solution Researcher",
+        "focus": "Strategy, approach"
+      },
+      "writer": {
+        "role": "Solution Writer",
+        "instruction": "Explain how the solution addressed each challenge"
+      },
+      "editor": {
+        "role": "Solution Editor",
+        "instruction": "Ensure clarity and coherence"
+      }
+    },
+    "tone": "Confident, solution-oriented",
+    "word_limit": 200
+  },
+  "Closing banner": {
+    "goal": "Explain how the challenges were solved",
+    "structure": [
+      "Approach",
+      "Key decisions",
+      "Implementation summary"
+    ],
+    "writing_rules": {
+      "style": "Solution-oriented",
+      "voice": "Confident",
+      "avoid": ["Over-technical explanations"],
+      "must_include": ["Clear problem-solution mapping"],
+      "format": "Logical step-by-step paragraphs"
+    },
+    "agents": {
+      "researcher": {
+        "role": "Solution Researcher",
+        "focus": "Strategy, approach"
+      },
+      "writer": {
+        "role": "Solution Writer",
+        "instruction": "Explain how the solution addressed each challenge"
+      },
+      "editor": {
+        "role": "Solution Editor",
+        "instruction": "Ensure clarity and coherence"
+      }
+    },
+    "tone": "Confident, solution-oriented",
+    "word_limit": 200
+  }
+}
