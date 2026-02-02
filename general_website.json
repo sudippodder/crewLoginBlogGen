@@ -30,39 +30,6 @@
     "word_limit": 40
   },
 
-  "Problem Context And Client Reality": {
-    "goal": "Optimize content for SEO and discoverability",
-    "structure": [
-      "SEO title",
-      "Meta description",
-      "Primary keyword",
-      "Secondary keywords"
-    ],
-    "writing_rules": {
-      "style": "",
-      "voice": "",
-      "avoid": ["Keyword stuffing", "Marketing hype"],
-      "must_include": ["Primary keyword"],
-      "format": ""
-    },
-    "agents": {
-      "researcher": {
-        "role": "SEO Researcher",
-        "focus": "Search intent, keyword research"
-      },
-      "writer": {
-        "role": "SEO Metadata Writer",
-        "instruction": "Write optimized metadata aligned with search intent"
-      },
-      "editor": {
-        "role": "SEO Editor",
-        "instruction": "Validate keyword placement and length"
-      }
-    },
-    "tone": "Clear, keyword-focused",
-    "word_limit": 60
-  },
-
   "Solution Overview": {
     "goal": "Explain background and relevance of the topic",
     "structure": [
@@ -93,38 +60,6 @@
     },
     "tone": "Professional, informative",
     "word_limit": 120
-  },
-
-  "Key Capabilities or Offerings": {
-    "goal": "Describe the project scope and objectives",
-    "structure": [
-      "Project overview",
-      "Objectives",
-      "Stakeholders involved"
-    ],
-    "writing_rules": {
-      "style": "",
-      "voice": "",
-      "avoid": ["Internal jargon"],
-      "must_include": ["Objective clarity"],
-      "format": ""
-    },
-    "agents": {
-      "researcher": {
-        "role": "Project Researcher",
-        "focus": "Project scope and goals"
-      },
-      "writer": {
-        "role": "Project Writer",
-        "instruction": "Describe the project in a structured manner"
-      },
-      "editor": {
-        "role": "Project Editor",
-        "instruction": "Improve readability and structure"
-      }
-    },
-    "tone": "Structured, client-focused",
-    "word_limit": 150
   },
 
   "How the Engagement Works": {
@@ -221,7 +156,7 @@
     "tone": "Confident, solution-oriented",
     "word_limit": 200
   },
-  "Closing & Next Step": {
+  "Final Orientation": {
     "goal": "Explain how the challenges were solved",
     "structure": [
       "Approach",
