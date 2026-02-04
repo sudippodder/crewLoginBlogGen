@@ -1,0 +1,120 @@
+{
+  "Hook": {
+    "goal": "",
+    "structure": [
+      "",
+      ""
+    ],
+    "writing_rules": {
+      "style": "",
+      "voice": "",
+      "avoid": [""],
+      "must_include": [""],
+      "format": ""
+    },
+    "agents": {
+      "researcher": {
+        "role": ""
+      },
+      "writer": {
+        "role": ""
+      },
+      "editor": {
+        "role": ""
+      }
+    },
+    "tone": "",
+    "word_limit": 0
+  },
+  "Core Insight": {
+    "goal": "",
+    "structure": [
+      "",
+      ""
+    ],
+    "writing_rules": {
+      "style": "",
+      "voice": "",
+      "avoid": [""],
+      "must_include": [""],
+      "format": ""
+    },
+    "agents": {
+      "researcher": {
+        "role": "",
+        "focus": ""
+      },
+      "writer": {
+        "role": "",
+        "instruction": ""
+      },
+      "editor": {
+        "role": "",
+        "instruction": ""
+      }
+    },
+    "tone": "",
+    "word_limit": 0
+  },
+  "Grounding": {
+    "goal": "",
+    "structure": [
+      "",
+      ""
+    ],
+    "writing_rules": {
+      "style": "",
+      "voice": "",
+      "avoid": [""],
+      "must_include": [""],
+      "format": ""
+    },
+    "agents": {
+      "researcher": {
+        "role": "",
+        "focus": ""
+      },
+      "writer": {
+        "role": "",
+        "instruction": ""
+      },
+      "editor": {
+        "role": "",
+        "instruction": ""
+      }
+    },
+    "tone": "",
+    "word_limit": 0
+  },
+  "Soft Close": {
+    "goal": "",
+    "structure": [
+      "",
+      ""
+    ],
+    "writing_rules": {
+      "style": "",
+      "voice": "",
+      "avoid": [""],
+      "must_include": [""],
+      "format": ""
+    },
+    "agents": {
+      "researcher": {
+        "role": ""
+        
+      },
+      "writer": {
+        "role": "",
+        "instruction": ""
+      },
+      "editor": {
+        "role": "",
+        "instruction": ""
+      }
+    },
+    "tone": "",
+    "word_limit": 0
+  }
+
+}
