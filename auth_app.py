@@ -892,7 +892,7 @@ def main():
     # Now includes checking for persistent session file
     initialize_session_state()
     with st.sidebar:
-        st.header("App Navigation v2.7")
+        st.header("App Navigation v2.8")
         if "logged_in" in st.session_state and st.session_state["logged_in"] == True:
             if "params" not in st.session_state:
                 st.session_state.params = {}
