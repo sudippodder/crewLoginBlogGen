@@ -1,0 +1,150 @@
+{
+  "Explainer Hook": {
+    "goal": "",
+    "structure": [
+      "",
+      ""
+    ],
+    "writing_rules": {
+      "style": "",
+      "voice": "",
+      "avoid": [""],
+      "must_include": [""],
+      "format": ""
+    },
+    "agents": {
+      "researcher": {
+        "role": ""
+      },
+      "writer": {
+        "role": ""
+      },
+      "editor": {
+        "role": ""
+      }
+    },
+    "tone": "",
+    "word_limit": 0
+  },
+  "The Thing Simply": {
+    "goal": "",
+    "structure": [
+      "",
+      ""
+    ],
+    "writing_rules": {
+      "style": "",
+      "voice": "",
+      "avoid": [""],
+      "must_include": [""],
+      "format": ""
+    },
+    "agents": {
+      "researcher": {
+        "role": "",
+        "focus": ""
+      },
+      "writer": {
+        "role": "",
+        "instruction": ""
+      },
+      "editor": {
+        "role": "",
+        "instruction": ""
+      }
+    },
+    "tone": "",
+    "word_limit": 0
+  },
+  "Why It Actually Matters": {
+    "goal": "",
+    "structure": [
+      "",
+      ""
+    ],
+    "writing_rules": {
+      "style": "",
+      "voice": "",
+      "avoid": [""],
+      "must_include": [""],
+      "format": ""
+    },
+    "agents": {
+      "researcher": {
+        "role": "",
+        "focus": ""
+      },
+      "writer": {
+        "role": "",
+        "instruction": ""
+      },
+      "editor": {
+        "role": "",
+        "instruction": ""
+      }
+    },
+    "tone": "",
+    "word_limit": 0
+  },
+  "Misunderstanding or Contrast": {
+    "goal": "",
+    "structure": [
+      "",
+      ""
+    ],
+    "writing_rules": {
+      "style": "",
+      "voice": "",
+      "avoid": [""],
+      "must_include": [""],
+      "format": ""
+    },
+    "agents": {
+      "researcher": {
+        "role": ""
+        
+      },
+      "writer": {
+        "role": "",
+        "instruction": ""
+      },
+      "editor": {
+        "role": "",
+        "instruction": ""
+      }
+    },
+    "tone": "",
+    "word_limit": 0
+  },
+  "Sleek Close": {
+    "goal": "",
+    "structure": [
+      "",
+      ""
+    ],
+    "writing_rules": {
+      "style": "",
+      "voice": "",
+      "avoid": [""],
+      "must_include": [""],
+      "format": ""
+    },
+    "agents": {
+      "researcher": {
+        "role": ""
+        
+      },
+      "writer": {
+        "role": "",
+        "instruction": ""
+      },
+      "editor": {
+        "role": "",
+        "instruction": ""
+      }
+    },
+    "tone": "",
+    "word_limit": 0
+  }
+}
+ 
