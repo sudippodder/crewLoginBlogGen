@@ -183,10 +183,10 @@ def init_db():
     # cslug
     #file_name
 
-    # c.execute("""
-    #     ALTER TABLE contents
-    #     ADD COLUMN check_humanize TEXT;       
-    # """)
+    c.execute("""
+        ALTER TABLE contents
+        ADD COLUMN humanize_content TEXT;       
+    """)
     conn.commit()
     conn.close()
 
