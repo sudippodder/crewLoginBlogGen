@@ -349,7 +349,7 @@ def content_list(user_id):
                     # st.markdown('<div class="rounded-card">', unsafe_allow_html=True)
                     id, topic, generated_content, user_name, created_at,humanize_content = row
                     
-
+                    st.write(f"### Topic : {topic} ")
                     st.write(f"### Created By : {user_name} ")
                     datetime_object = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
                     created_date = datetime_object.strftime("%B %d, %Y")
