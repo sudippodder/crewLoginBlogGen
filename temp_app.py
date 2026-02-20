@@ -5,6 +5,9 @@ import sqlite3
 import os
 from datetime import datetime
 import json
+import zerogpt_api
+import highlight_ai_segments
+import paragraph_editor
 #import openai  # or your preferred LLM
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -184,6 +187,28 @@ def template_page(user_id):
 # ----------------------------
 # CONTENT CRUD PAGE
 # ----------------------------
+def update_content_field_by_id(content_id, field_name, new_value):
+    conn = sqlite3.connect(DATABASE_FILE)
+    cursor = conn.cursor()
+    #clean_template = sanitize_for_json(new_value)
+    #json_string = json.dumps(clean_template, ensure_ascii=False)
+    if isinstance(new_value, (dict, list)):
+        new_value = json.dumps(new_value, ensure_ascii=False)
+    cursor.execute(f"UPDATE contents SET {field_name} = ? WHERE id=? ", (new_value, content_id))
+    conn.commit()
+    conn.close()
+
+
+def select_content_field_by_id(content_id, field_name):
+    conn = sqlite3.connect(DATABASE_FILE)
+    cursor = conn.cursor()
+    
+    cursor.execute(f"SELECT {field_name} FROM contents WHERE id=?", (content_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] if result else None
+
+
 def content_page(user_id):
     st.header("Generated Content List cp")
     conn = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
@@ -263,49 +288,95 @@ def content_list(user_id):
         selected_type_id = type_map[selected_type_name]
         #st.markdown(f"{selected_type_id}")
         cursor.execute("""
-            SELECT c.id, c.topic, c.generated_content, u.username, c.created_at
+            SELECT c.id, c.topic, c.generated_content, u.username, c.created_at, c.humanize_content
             FROM contents as c left join users as u on  c.user_id=u.id
             WHERE c.template_id=?
         """, (selected_type_id,))
 
         rows = cursor.fetchall()
         st.markdown("""
-    <style>
-    .rounded-card {
-        width: 100%;
-        box-sizing: border-box;
-        border: 1px solid #e6e6e6;
-        border-radius: 14px;
-        padding: 16px;
-        margin-bottom: 16px;
-        background-color: #ffffff;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+        <style>
+        .rounded-card {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #e6e6e6;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: #ffffff;
+        }
+                            /* Root container */
+        .json-container {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Remove default bullets */
+        .json-container ul {
+            list-style: none;
+            padding-left: 20px;
+            margin: 6px 0;
+        }
+
+        /* List items */
+        .json-container li {
+            margin: 6px 0;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid #f0f0f0;
+        }
+
+        /* Keys */
+        .json-container strong {
+            color: #ff4b4b;
+            font-weight: 600;
+        }
+
+        /* Nested indentation guide */
+        .json-container ul ul {
+            border-left: 2px solid #ff4b4b;
+            margin-left: 10px;
+            padding-left: 12px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
         if rows:
             for row in rows:
                 with st.container():
                     # st.markdown('<div class="rounded-card">', unsafe_allow_html=True)
-                    id, topic, generated_content, user_name, created_at = row
-                    # st.subheader("📄 Blog Content")
-                    # st.write("This content stays inside main layout.")
-                    # st.button("View", key="view_1")
-                    # st.markdown('</div>', unsafe_allow_html=True)
+                    id, topic, generated_content, user_name, created_at,humanize_content = row
+                    
 
                     st.write(f"### Created By : {user_name} ")
                     datetime_object = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
                     created_date = datetime_object.strftime("%B %d, %Y")
                     #created_date = created_at.strftime("%B %d, %Y")
                     st.write(f"### Created At :  {created_date} ")
-                    st.write(f"### {topic} ")
+                    
 
                     col1, col2 = st.columns([6, 1])
+                    tone = f"tone_{id}"
+                    tone = st.session_state.get(f"selected_tone_{id}", None)
+                    
+                    human_gen_check = False
+                    check_btn = False
                     with col1:
-                        if st.button("View", key=f"view_{id}"):
+                        jcol1, jcol2, jcol3, jcol4 = st.columns([1.2, 1.3, 1.5, 2])
+                        with jcol1:
+                            #st.markdown('<div class="my-special-button">', unsafe_allow_html=True)
+                            view_btn = st.button("View Original Content", key=f"view_{id}")
+                        with jcol2:    
+                            check_btn = st.button("View Humanize Content", key=f"check_{id}")
+                        with jcol3:    
+                            human_gen_btn = st.button("Humanize Content Generator", key=f"human_gen_{id}")
+                        # with jcol4:    
+                        #     human_gen_check = st.button("Humanize Generator Check", key=f"human_gen_check_{id}")        
+                          
+                        if view_btn:
                             if generated_content:
-                                # clean_template = sanitize_for_json(generated_content)
-                                # json_string = json.dumps(clean_template, ensure_ascii=False)
-                                # generated_content = json.loads(json_string)
                                 try:
                                     generated_content = json.loads(generated_content)
                                 except json.JSONDecodeError as e:
@@ -314,13 +385,38 @@ def content_list(user_id):
                                     return
                                 for section, content in generated_content.items():
                                     with st.expander(section.title(), expanded=True):
-                                        #st.write(content)
                                         content = common.unescape_text(content)
                                         st.markdown(f"{content}", unsafe_allow_html=True)
-                                #st.markdown(template_dict)
+                                
                             else:
                                 st.info("No generated content available.")
-
+                        elif check_btn:
+                            if humanize_content:
+                                humanize_content = json.loads(humanize_content)
+                                
+                                highlight_ai_segments.display_highlighted_text(humanize_content, html_view=True)
+                                # try:
+                                #     generated_content = json.loads(humanize_content)
+                                # except json.JSONDecodeError as e:
+                                #     st.error("Stored template is corrupted.")
+                                #     print("JSON ERROR:", e)
+                                #     return
+                                #html_content = common.ai_to_html(humanize_content)
+                                #st.markdown(f'<div class="json-container">{html_content}</div>', unsafe_allow_html=True)
+                                
+                            else:
+                                st.info("No generated content available.")
+                        #elif (human_gen_btn and tone) or st.session_state.get(f"selected_tone_{id}", None):        
+                        elif (human_gen_btn):
+                            open_form(id, generated_content)
+                            
+                        elif human_gen_check:
+                            if generated_content:
+                                humanized = zerogpt_api.humanize_content(generated_content)
+                                st.markdown("### Humanized Content")
+                                st.markdown(humanized)
+                            else:
+                                st.info("No generated content available.")        
                     with col2:
                         if st.button("Delete", key=f"delete_{id}"):
                             cursor.execute("DELETE FROM contents WHERE id=?", (id,))
@@ -362,7 +458,7 @@ def generate_content_page(user_id):
     if 'bit' not in st.session_state:
         st.session_state['bit'] = 0
     bit = st.session_state['bit']
-    #st.markdown(f"---{bit}---")
+    
     if st.button("Generate") or bit == 2:
         with st.spinner("⏳ Generating content..."):
             template_id = template_select[0]
@@ -398,6 +494,80 @@ def generate_content_page(user_id):
                 st.success("Content saved!")
                 st.rerun()
 
+
+@st.dialog("User Form", width="medium")
+def open_form(id, generated_content=None):
+    st.markdown("""
+<style>
+.case-study {
+    background: #f9fafc;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+.case-study strong {
+    color: #ff4b4b;
+}
+
+.case-study ul {
+    margin-bottom: 15px;
+}
+</style>
+""", unsafe_allow_html=True)
+    with st.form("popup_form"):
+        try:
+            generated_content = json.loads(generated_content)
+        except json.JSONDecodeError as e:
+            st.error("Stored template is corrupted.")
+            print("JSON ERROR:", e)
+            return
+        generated_content = common.json_to_html(generated_content)
+        html_content = common.html_to_ai(generated_content)
+
+        html_content = html_content.replace("\\n", "\n")
+        html_content = html_content.replace("\\*\\*", "**")
+
+        edited_text = st.text_area(
+            "",
+            value=html_content,
+            height=400,
+            label_visibility="collapsed"
+        )
+        
+        # tone = common.humanizer_tone(id)
+        # st.session_state[f"selected_tone_{id}"] = tone
+        hm_con = select_content_field_by_id(id, "humanize_content")
+
+        if hm_con:
+            button_label = "Regenerate Humanized Content"
+        else:
+            button_label = "Generate Humanized Content"
+
+        if st.form_submit_button(button_label, key=f"human_gen_submit_{id}"):
+            
+            with st.spinner("Generating..."):
+                #result = common.run_humanizer(edited_text, tone)
+                #result = common.professional_humanizer_pipeline(edited_text)
+                #result = common.humanize_content(edited_text)
+                #result = common.adaptive_humanizer(edited_text, threshold=15)
+                result, final_score, history = common.parallel_adaptive_pipeline(edited_text)
+                print("FINAL SCORE:", final_score)
+                print("HISTORY:", history)
+                humanized = zerogpt_api.check_ai_content(result)
+                update_content_field_by_id(id, "humanize_content", humanized)
+                st.session_state.detection_humanized = humanized
+            
+        else:
+            hm_con = json.loads(hm_con) if hm_con else None
+            st.session_state.detection_humanized = hm_con
+     
+    if "detection_humanized" in st.session_state and st.session_state.detection_humanized is not None:
+        st.markdown("### Humanized Content")
+        #paragraph_editor.display_paragraphs_with_detection(st.session_state.detection_humanized)
+        highlight_ai_segments.display_highlighted_text(st.session_state.detection_humanized, html_view=True)
 # ----------------------------
 # MAIN APP
 # ----------------------------

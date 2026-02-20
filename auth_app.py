@@ -184,9 +184,8 @@ def init_db():
     #file_name
 
     # c.execute("""
-    #     ALTER TABLE template_type
-    #     ADD COLUMN cslug TEXT;
-        
+    #     ALTER TABLE contents
+    #     ADD COLUMN check_humanize TEXT;       
     # """)
     conn.commit()
     conn.close()
@@ -892,7 +891,7 @@ def main():
     # Now includes checking for persistent session file
     initialize_session_state()
     with st.sidebar:
-        st.header("App Navigation v3.0")
+        st.header("App Navigation v3.1")
         if "logged_in" in st.session_state and st.session_state["logged_in"] == True:
             if "params" not in st.session_state:
                 st.session_state.params = {}
@@ -910,7 +909,7 @@ def main():
             # Added 'Posts' to the list of pages
             if user['role'] == 'admin':
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'Humanize','Template','Generate Content','Template Contents','DB','Template Type','Content Generator','Content List']
-                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List']  #,'DB','Update Template Type'
+                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List','DB','Update Template Type']  #,'DB','Update Template Type'
             else:
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content','Content Generator','Content List']
                 user_pages = ['Dashboard', 'Profile', 'Content Generator','Content List']
