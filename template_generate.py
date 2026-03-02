@@ -799,6 +799,7 @@ def admin_generate_casestudy_content_page(user_id):
         "Template Type",
         ["-- Select Type --"] + type_names
     )
+    
     # --- Template Dropdown (Dependent) ---
     if selected_type_name != "-- Select Type --":
         selected_type_id = type_map[selected_type_name]
@@ -816,7 +817,7 @@ def admin_generate_casestudy_content_page(user_id):
                 selected_template_id, selected_template_json = template_map[template_select]
         else:
             st.warning("No templates found for this type.")
-
+    citation = st.checkbox("Sources & Citations")
     if 'bit' not in st.session_state:
         st.session_state['bit'] = 0
     bit = st.session_state['bit']
@@ -824,7 +825,7 @@ def admin_generate_casestudy_content_page(user_id):
         with st.spinner("⏳ Generating content..."):
             template_json = selected_template_json
             template_id = selected_template_id
-            generated = crew_casestudy.generate_blog(topic=topic,template_sections=template_json)
+            generated = crew_casestudy.generate_blog(topic=topic,template_sections=template_json,citation=citation)
             st.success(f"{template_select} generated successfully!")
             st.session_state["temp_generated"] = generated
             st.session_state["temp_topic"] = topic

@@ -125,23 +125,57 @@ Rules:
 # -------------------------------
 # Generate Blog
 # -------------------------------
-def generate_blog(topic,template_sections):
+def generate_blog(topic,template_sections,citation=False):
     all_tasks = []
     all_agents = []
     final_edit_tasks = {}
     template_sections = json.loads(template_sections)
+    citation_agent = Agent(
+        role="Citation Manager",
+        goal="Ensure all factual statements include citations and sources",
+        backstory="""
+        You verify content and attach citations to claims.
+        You organize sources and ensure references appear in a Sources section.
+        Never invent fake citations.
+        """,
+        verbose=True
+    )
     for section_name, cfg in template_sections.items():
         research_task, write_task, edit_task = build_tasks(section_name, cfg, topic)
+        citation_task = Task(
+            description=f"""
+            Add citations to the section: {section_name}
+            Ensure citation markers [1], [2] exist and a Sources section is included.
+            """,
+            expected_output="""
+            The section content rewritten with citation markers [1], [2]
+            and a Sources section listing referenced URLs.
+            """,
+            agent=citation_agent,
+            context=[edit_task]
+        )
+        if citation:
+                
+            all_tasks.extend([research_task, write_task, edit_task, citation_task])
+            all_agents.extend([
+                research_task.agent,
+                write_task.agent,
+                edit_task.agent,
+                citation_task.agent
+            ])
 
-        all_tasks.extend([research_task, write_task, edit_task])
-        all_agents.extend([
-            research_task.agent,
-            write_task.agent,
-            edit_task.agent
-        ])
+            # ✅ STORE EDIT TASK
+            final_edit_tasks[section_name] = citation_task
+        else:
+            all_tasks.extend([research_task, write_task, edit_task])
+            all_agents.extend([
+                research_task.agent,
+                write_task.agent,
+                edit_task.agent
+            ])
 
-        # ✅ STORE EDIT TASK
-        final_edit_tasks[section_name] = edit_task
+            # ✅ STORE EDIT TASK
+            final_edit_tasks[section_name] = edit_task
 
     crew = Crew(
         agents=list({id(a): a for a in all_agents}.values()),

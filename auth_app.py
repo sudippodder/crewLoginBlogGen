@@ -466,7 +466,7 @@ def show_dashboard():
     st.header(f"Welcome back, {user['full_name'] or user['username']}!", divider='blue')
 
     st.markdown(f"""
-        <div style="padding: 15px; border-radius: 10px; background-color: #e0f7fa; border-left: 5px solid #00bcd4;">
+        <div style="padding: 15px; border-radius: 10px; background-color: ; border-left: 5px solid #00bcd4;">
             <p style="font-size: 1.1em; margin: 0;">
                 Your access role is: <strong>{user['role'].capitalize()}</strong>.
             </p>
@@ -486,7 +486,7 @@ def show_profile():
     #st.header(f"Details for {user['username'].capitalize()}", divider='green')
 
     st.markdown(f"""
-        <div style="border: 1px solid #ddd; padding: 25px; border-radius: 12px; background-color: #f0fff4;">
+        <div style="border: 1px solid #ddd; padding: 25px; border-radius: 12px; background-color: ">
             <p><strong>Database ID:</strong> <code>{user['id']}</code></p>
             <p><strong>Username:</strong> <code>{user['username']}</code></p>
             <p><strong>Full Name:</strong> {user['full_name'] or 'Not Provided'}</p>
@@ -891,7 +891,7 @@ def main():
     # Now includes checking for persistent session file
     initialize_session_state()
     with st.sidebar:
-        st.header("App Navigation v3.1")
+        st.header("App Navigation v3.2")
         if "logged_in" in st.session_state and st.session_state["logged_in"] == True:
             if "params" not in st.session_state:
                 st.session_state.params = {}
