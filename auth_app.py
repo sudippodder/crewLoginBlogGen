@@ -150,6 +150,17 @@ def init_db():
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS regenerated_contents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content_id INTEGER,
+        data_json TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (content_id) REFERENCES contents (id)
+    );
+    """)
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS tones(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -909,7 +920,7 @@ def main():
             # Added 'Posts' to the list of pages
             if user['role'] == 'admin':
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content' ,'Humanize','Template','Generate Content','Template Contents','DB','Template Type','Content Generator','Content List']
-                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List']  #,'DB','Update Template Type'
+                user_pages = ['Dashboard', 'Profile','Template Type','Admin Content Generator','Content List','DB','Update Template Type']  #,'DB','Update Template Type'
             else:
                 #user_pages = ['Dashboard', 'Profile', 'Tone','Content','Content Generator','Content List']
                 user_pages = ['Dashboard', 'Profile', 'Content Generator','Content List']

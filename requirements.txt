@@ -26,3 +26,5 @@ textstat
 markdownify 
 beautifulsoup4
 markdown
+python-docx
+fpdf2

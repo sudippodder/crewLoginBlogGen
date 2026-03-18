@@ -129,7 +129,8 @@ def generate_blog(topic,template_sections,citation=False):
     all_tasks = []
     all_agents = []
     final_edit_tasks = {}
-    template_sections = json.loads(template_sections)
+    if isinstance(template_sections, str):
+        template_sections = json.loads(template_sections)
     citation_agent = Agent(
         role="Citation Manager",
         goal="Ensure all factual statements include citations and sources",

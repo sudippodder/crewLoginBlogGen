@@ -264,7 +264,95 @@ def get_templates_by_type(type_id):
     rows = cursor.fetchall()
     conn.close()
     return rows
+def regenerate_content_view(user_id, content_id, template_id, topic):
+    st.header(f"Regenerate Content: {topic}")
+    
+    # Initialize generated outputs in session state if not there
+    if "regenerated_contents" not in st.session_state:
+        # Load existing versions from the database
+        conn = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+        cursor = conn.cursor()
+        cursor.execute("SELECT data_json FROM regenerated_contents WHERE content_id=? ORDER BY id ASC", (content_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        st.session_state["regenerated_contents"] = [r[0] for r in rows]
+
+    col_back, col_regen, col_default = st.columns(3)
+    with col_back:
+        if st.button("Back"):
+            st.session_state["params"]["subpage"] = "content_list"
+            st.session_state.pop("regenerated_contents", None)
+            st.session_state.pop("selected_regenerated_idx", None)
+            st.rerun()
+            
+    with col_regen:
+        if st.button("Regenerate"):
+            with st.spinner("⏳ Regenerating content (this may take a few minutes)..."):
+                conn = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+                cursor = conn.cursor()
+                cursor.execute("SELECT data_json FROM templates_form WHERE id=?", (template_id,))
+                t = cursor.fetchone()
+                if t and t[0]:
+                    import crew_casestudy
+                    try:
+                        template_json = json.loads(t[0]) if isinstance(t[0], str) else t[0]
+                        new_content_dict = crew_casestudy.generate_blog(topic=topic, template_sections=template_json)
+                        new_content_str = json.dumps(new_content_dict, ensure_ascii=False)
+                        
+                        # Save to the new table
+                        cursor.execute("INSERT INTO regenerated_contents (content_id, data_json) VALUES (?, ?)", (content_id, new_content_str))
+                        conn.commit()
+                        
+                        st.session_state["regenerated_contents"].append(new_content_str)
+                        st.success("New version generated and saved!")
+                    except Exception as e:
+                        st.error(f"Error during generation: {str(e)}")
+                else:
+                    st.error("Template definition not found. Unable to regenerate.")
+                conn.close()
+                    
+    with col_default:
+        if st.button("Set Default"):
+            idx = st.session_state.get("selected_regenerated_idx", None)
+            if idx is not None and 0 <= idx < len(st.session_state["regenerated_contents"]):
+                selected_content = st.session_state["regenerated_contents"][idx]
+                conn = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+                cursor = conn.cursor()
+                cursor.execute("UPDATE contents SET generated_content=? WHERE id=?", (selected_content, content_id))
+                conn.commit()
+                conn.close()
+                st.success("Selected version set as default!")
+            else:
+                st.warning("Please select a version first.")
+
+    st.markdown("---")
+    if st.session_state["regenerated_contents"]:
+        options = [f"Version {i+1}" for i in range(len(st.session_state["regenerated_contents"]))]
+        selected_option = st.radio("Select a version to preview or set as default:", options, index=st.session_state.get("selected_regenerated_idx", 0))
+        selected_idx = options.index(selected_option)
+        st.session_state["selected_regenerated_idx"] = selected_idx
+        
+        # Display the selected content
+        content_str = st.session_state["regenerated_contents"][selected_idx]
+        try:
+            content_json = json.loads(content_str)
+            for section, content in content_json.items():
+                with st.expander(section.title(), expanded=True):
+                    st.write(content)
+        except:
+            st.write(content_str)
+    else:
+        st.info("No regenerated versions yet. Click 'Regenerate' to create the first one.")
+
 def content_list(user_id):
+    # Handle routing for regenerate page
+    if st.session_state.get("params", {}).get("subpage") == "regenerate_page":
+        regen_content_id = st.session_state["params"].get("regen_content_id")
+        regen_template_id = st.session_state["params"].get("regen_template_id")
+        regen_topic = st.session_state["params"].get("regen_topic")
+        regenerate_content_view(user_id, regen_content_id, regen_template_id, regen_topic)
+        return
+        
     if st.button("Back"):
         st.session_state["params"]["current_page"] = "content_list"
         st.session_state["params"]["page"] = "content list"
@@ -364,7 +452,7 @@ def content_list(user_id):
                     human_gen_check = False
                     check_btn = False
                     with col1:
-                        jcol1, jcol2, jcol3, jcol4 = st.columns([1.2, 1.3, 1.5, 2])
+                        jcol1, jcol2, jcol3, jcol4 = st.columns([1.2, 1.3, 1.5, 1.5])
                         with jcol1:
                             #st.markdown('<div class="my-special-button">', unsafe_allow_html=True)
                             view_btn = st.button("View Original Content", key=f"view_{id}")
@@ -372,21 +460,69 @@ def content_list(user_id):
                             check_btn = st.button("View Humanize Content", key=f"check_{id}")
                         with jcol3:    
                             human_gen_btn = st.button("Humanize Content Generator", key=f"human_gen_{id}")
-                        # with jcol4:    
-                        #     human_gen_check = st.button("Humanize Generator Check", key=f"human_gen_check_{id}")        
+                        with jcol4:    
+                            regen_btn = st.button("Regenerate", key=f"regenerate_route_{id}")        
                           
+                        if regen_btn:
+                            st.session_state["params"]["subpage"] = "regenerate_page"
+                            st.session_state["params"]["regen_content_id"] = id
+                            # We might not have the original template_id directly in the current scope from the query mapping.
+                            # The query returned selected_type_id which is from templates_form, but the actual original template id might be in contents table.
+                            # So let's fetch the actual template_id from contents
+                            conn_regen = sqlite3.connect(DATABASE_FILE, check_same_thread=False)
+                            cursor_regen = conn_regen.cursor()
+                            cursor_regen.execute("SELECT template_id FROM contents WHERE id=?", (id,))
+                            fetched_t_id = cursor_regen.fetchone()
+                            conn_regen.close()
+                            
+                            st.session_state["params"]["regen_template_id"] = fetched_t_id[0] if fetched_t_id else selected_type_id
+                            st.session_state["params"]["regen_topic"] = topic
+                            st.rerun()
+                            
+                        # Handle view state
                         if view_btn:
+                            if f"view_content_{id}" not in st.session_state:
+                                st.session_state[f"view_content_{id}"] = True
+                            else:
+                                st.session_state[f"view_content_{id}"] = not st.session_state[f"view_content_{id}"]
+
+                        if st.session_state.get(f"view_content_{id}", False):
                             if generated_content:
                                 try:
-                                    generated_content = json.loads(generated_content)
+                                    generated_content_data = json.loads(generated_content)
                                 except json.JSONDecodeError as e:
                                     st.error("Stored template is corrupted.")
                                     print("JSON ERROR:", e)
-                                    return
-                                for section, content in generated_content.items():
+                                    continue
+                                
+                                for section, content in generated_content_data.items():
                                     with st.expander(section.title(), expanded=True):
-                                        content = common.unescape_text(content)
-                                        st.markdown(f"{content}", unsafe_allow_html=True)
+                                        content_text = common.unescape_text(content)
+                                        st.markdown(f"{content_text}", unsafe_allow_html=True)
+                                
+                                st.markdown("### Export Option")
+                                import export_utils
+                                export_fmt = st.selectbox("Export Format", ["PDF", "DOCX"], key=f"ex_fmt_{id}")
+                                
+                                if export_fmt == "PDF":
+                                    btn_label = "Export as PDF"
+                                    mime = "application/pdf"
+                                    data_bytes = export_utils.generate_pdf_bytes(generated_content_data)
+                                    file_ext = "pdf"
+                                else:
+                                    btn_label = "Export as DOCX"
+                                    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                    data_bytes = export_utils.generate_docx_bytes(generated_content_data)
+                                    file_ext = "docx"
+                                
+                                title_slug = topic.replace(' ', '_').lower() if topic else f"content_{id}"
+                                st.download_button(
+                                    label=btn_label,
+                                    data=data_bytes,
+                                    file_name=f"{title_slug}.{file_ext}",
+                                    mime=mime,
+                                    key=f"dl_btn_{id}_{export_fmt}"
+                                )
                                 
                             else:
                                 st.info("No generated content available.")
